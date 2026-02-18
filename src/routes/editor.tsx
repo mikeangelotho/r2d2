@@ -85,123 +85,141 @@ export default function Editor() {
   };
   
   return (
-    <div class="min-h-screen bg-slate-900 p-4">
-      <R2Config onConnected={handleConnected} />
+    <div class="min-h-screen bg-[var(--bg-primary)] pt-14">
+      <div class="fixed inset-0 pointer-events-none overflow-hidden">
+        <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_top,var(--accent-subtle)_0%,transparent_50%)] opacity-30"></div>
+      </div>
       
-      <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
-        <div class="lg:col-span-1">
-          <FileBrowser
-            key={refreshKey()}
-            selectedFile={selectedFile()}
-            onFileSelect={handleFileSelect}
-            refreshTrigger={refreshKey()}
-          />
-        </div>
+      <div class="relative z-10 p-4 max-w-[1920px] mx-auto">
+        <R2Config onConnected={handleConnected} />
         
-        <div class="lg:col-span-3">
-          <Show when={!selectedFile()}>
-            <div class="bg-slate-800 rounded-lg p-8 text-center">
-              <p class="text-gray-400">Select a JSON file to edit</p>
-            </div>
-          </Show>
+        <div class="grid grid-cols-1 lg:grid-cols-5 gap-4">
+          <div class="lg:col-span-1 min-h-[500px]">
+            <FileBrowser
+              key={refreshKey()}
+              selectedFile={selectedFile()}
+              onFileSelect={handleFileSelect}
+              refreshTrigger={refreshKey()}
+            />
+          </div>
           
-          <Show when={selectedFile()}>
-            <div class="bg-slate-800 rounded-lg p-4">
-              <div class="flex items-center justify-between mb-4">
-                <div class="flex items-center gap-2">
-                  <h2 class="text-white font-medium truncate">{selectedFile()}</h2>
-                  <Show when={hasChanges()}>
-                    <span class="text-yellow-400 text-sm">(modified)</span>
-                  </Show>
+          <div class="lg:col-span-4">
+            <Show when={!selectedFile()}>
+              <div class="glass-elevated rounded-lg p-12 text-center min-h-[500px] flex flex-col items-center justify-center">
+                <div class="led led-amber mb-4"></div>
+                <p class="font-mono text-sm text-[var(--text-muted)] tracking-wide">SELECT A FILE TO BEGIN</p>
+              </div>
+            </Show>
+            
+            <Show when={selectedFile()}>
+              <div class="glass-elevated rounded-lg overflow-hidden">
+                <div class="flex items-center justify-between px-4 py-3 border-b border-[var(--border-subtle)] bg-[var(--bg-elevated)]">
+                  <div class="flex items-center gap-3 min-w-0">
+                    <span class="font-mono text-xs text-[var(--accent)]">▸</span>
+                    <h2 class="font-mono text-sm text-[var(--text-primary)] truncate">{selectedFile()?.split("/").pop()}</h2>
+                    <Show when={hasChanges()}>
+                      <span class="text-[var(--warning)] font-mono text-xs blink">●</span>
+                    </Show>
+                  </div>
+                  
+                  <div class="flex items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={() => setViewMode("tree")}
+                      class={`px-3 py-1.5 rounded text-xs font-mono transition-all ${
+                        viewMode() === "tree"
+                          ? "bg-[var(--accent)] text-black"
+                          : "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)]"
+                      }`}
+                    >
+                      TREE
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setViewMode("table")}
+                      class={`px-3 py-1.5 rounded text-xs font-mono transition-all ${
+                        viewMode() === "table"
+                          ? "bg-[var(--accent)] text-black"
+                          : "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)]"
+                      }`}
+                    >
+                      TABLE
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setViewMode("preview")}
+                      class={`px-3 py-1.5 rounded text-xs font-mono transition-all ${
+                        viewMode() === "preview"
+                          ? "bg-[var(--accent)] text-black"
+                          : "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)]"
+                      }`}
+                    >
+                      PREVIEW
+                    </button>
+                  </div>
                 </div>
                 
-                <div class="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setViewMode("tree")}
-                    class={`px-3 py-1 rounded text-sm ${
-                      viewMode() === "tree"
-                        ? "bg-sky-600 text-white"
-                        : "bg-slate-700 text-gray-300 hover:bg-slate-600"
-                    }`}
-                  >
-                    Tree
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setViewMode("table")}
-                    class={`px-3 py-1 rounded text-sm ${
-                      viewMode() === "table"
-                        ? "bg-sky-600 text-white"
-                        : "bg-slate-700 text-gray-300 hover:bg-slate-600"
-                    }`}
-                  >
-                    Table
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setViewMode("preview")}
-                    class={`px-3 py-1 rounded text-sm ${
-                      viewMode() === "preview"
-                        ? "bg-sky-600 text-white"
-                        : "bg-slate-700 text-gray-300 hover:bg-slate-600"
-                    }`}
-                  >
-                    Preview
-                  </button>
+                <Show when={error()}>
+                  <div class="flex items-center gap-2 px-4 py-3 bg-[rgba(239,68,68,0.1)] border-b border-[var(--error)]">
+                    <span class="led led-red"></span>
+                    <span class="text-[var(--error)] font-mono text-xs">{error()}</span>
+                  </div>
+                </Show>
+                
+                <Show when={success()}>
+                  <div class="flex items-center gap-2 px-4 py-3 bg-[rgba(34,197,94,0.1)] border-b border-[var(--success)]">
+                    <span class="led led-green"></span>
+                    <span class="text-[var(--success)] font-mono text-xs">{success()}</span>
+                  </div>
+                </Show>
+                
+                <Show when={loading()}>
+                  <div class="flex items-center justify-center gap-3 py-16">
+                    <div class="led led-amber led-pulse"></div>
+                    <span class="font-mono text-sm text-[var(--text-muted)]">LOADING...</span>
+                  </div>
+                </Show>
+                
+                <Show when={!loading() && jsonData()}>
+                  <div class="h-[calc(100vh-380px)] overflow-auto p-4">
+                    <Show when={viewMode() === "tree"}>
+                      <JsonTreeView data={jsonData()!} onChange={handleDataChange} />
+                    </Show>
+                    <Show when={viewMode() === "table"}>
+                      <JsonTableView data={jsonData()!} onChange={handleDataChange} />
+                    </Show>
+                    <Show when={viewMode() === "preview"}>
+                      <PreviewPane data={jsonData()!} />
+                    </Show>
+                  </div>
+                </Show>
+                
+                <div class="flex items-center justify-between px-4 py-3 border-t border-[var(--border-subtle)] bg-[var(--bg-elevated)]">
+                  <div class="flex items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={handleSave}
+                      disabled={saving() || !hasChanges()}
+                      class="btn-primary font-mono text-xs tracking-wide"
+                    >
+                      {saving() ? "SAVING..." : "SAVE TO R2"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleDownload}
+                      disabled={!jsonData()}
+                      class="btn-secondary font-mono text-xs"
+                    >
+                      DOWNLOAD
+                    </button>
+                  </div>
+                  <div class="font-mono text-xs text-[var(--text-muted)]">
+                    {hasChanges() ? "UNSAVED CHANGES" : "ALL CHANGES SAVED"}
+                  </div>
                 </div>
               </div>
-              
-              <Show when={error()}>
-                <div class="bg-red-900/50 border border-red-700 text-red-200 px-4 py-2 rounded mb-4">
-                  {error()}
-                </div>
-              </Show>
-              
-              <Show when={success()}>
-                <div class="bg-green-900/50 border border-green-700 text-green-200 px-4 py-2 rounded mb-4">
-                  {success()}
-                </div>
-              </Show>
-              
-              <Show when={loading()}>
-                <div class="text-center py-8 text-gray-400">Loading...</div>
-              </Show>
-              
-              <Show when={!loading() && jsonData()}>
-                <div class="h-[calc(100vh-320px)] overflow-auto">
-                  <Show when={viewMode() === "tree"}>
-                    <JsonTreeView data={jsonData()!} onChange={handleDataChange} />
-                  </Show>
-                  <Show when={viewMode() === "table"}>
-                    <JsonTableView data={jsonData()!} onChange={handleDataChange} />
-                  </Show>
-                  <Show when={viewMode() === "preview"}>
-                    <PreviewPane data={jsonData()!} />
-                  </Show>
-                </div>
-              </Show>
-              
-              <div class="flex items-center gap-3 mt-4 pt-4 border-t border-slate-700">
-                <button
-                  type="button"
-                  onClick={handleSave}
-                  disabled={saving() || !hasChanges()}
-                  class="px-4 py-2 bg-green-600 hover:bg-green-500 disabled:bg-slate-600 disabled:cursor-not-allowed text-white rounded text-sm font-medium transition-colors"
-                >
-                  {saving() ? "Saving..." : "Save to R2"}
-                </button>
-                <button
-                  type="button"
-                  onClick={handleDownload}
-                  disabled={!jsonData()}
-                  class="px-4 py-2 bg-slate-700 hover:bg-slate-600 disabled:bg-slate-800 disabled:cursor-not-allowed text-white rounded text-sm font-medium transition-colors"
-                >
-                  Download
-                </button>
-              </div>
-            </div>
-          </Show>
+            </Show>
+          </div>
         </div>
       </div>
     </div>

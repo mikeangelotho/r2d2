@@ -66,80 +66,96 @@ export default function R2Config(props: Props) {
   };
 
   return (
-    <div class="bg-slate-800 rounded-lg p-4 mb-4">
+    <div class="glass-elevated rounded-lg overflow-hidden">
       <button
         type="button"
-        class="flex items-center justify-between w-full text-white font-medium"
+        class="flex items-center justify-between w-full px-4 py-3 text-left hover:bg-[var(--bg-elevated)] transition-colors"
         onClick={() => setExpanded(!expanded())}
       >
-        <span>R2 Configuration</span>
-        <span class="text-sm">
-          {isConnected() ? (
-            <span class="text-green-400">Connected</span>
-          ) : (
-            <span class="text-yellow-400">Not connected</span>
-          )}
-        </span>
+        <div class="flex items-center gap-3">
+          <div class={`led ${isConnected() ? "led-green led-pulse" : "led-amber"}`}></div>
+          <span class="font-mono text-sm tracking-wider">R2 CONFIG</span>
+        </div>
+        <div class="flex items-center gap-3">
+          <span class="font-mono text-xs text-[var(--text-muted)]">
+            {isConnected() ? bucketName() : "NOT CONNECTED"}
+          </span>
+          <svg 
+            class={`w-4 h-4 text-[var(--text-muted)] transition-transform ${expanded() ? "rotate-180" : ""}`} 
+            fill="none" 
+            stroke="currentColor" 
+            viewBox="0 0 24 24"
+          >
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+          </svg>
+        </div>
       </button>
       
       <Show when={expanded()}>
-        <div class="mt-4 space-y-3">
-          <div>
-            <label class="block text-sm text-gray-400 mb-1">Endpoint URL</label>
-            <input
-              type="text"
-              value={endpoint()}
-              onInput={(e) => setEndpoint(e.currentTarget.value)}
-              placeholder="https://xxx.r2.cloudflarestorage.com"
-              class="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded text-white text-sm focus:outline-none focus:border-sky-500"
-            />
+        <div class="px-4 pb-4 border-t border-[var(--border-subtle)]">
+          <div class="pt-4 space-y-3">
+            <div>
+              <label class="block font-mono text-xs text-[var(--text-muted)] mb-1.5 tracking-wide">ENDPOINT</label>
+              <input
+                type="text"
+                value={endpoint()}
+                onInput={(e) => setEndpoint(e.currentTarget.value)}
+                placeholder="https://xxx.r2.cloudflarestorage.com"
+                class="input font-mono text-sm"
+              />
+            </div>
+            
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block font-mono text-xs text-[var(--text-muted)] mb-1.5 tracking-wide">ACCESS KEY</label>
+                <input
+                  type="text"
+                  value={accessKeyId()}
+                  onInput={(e) => setAccessKeyId(e.currentTarget.value)}
+                  placeholder="AKIA..."
+                  class="input font-mono text-sm"
+                />
+              </div>
+              
+              <div>
+                <label class="block font-mono text-xs text-[var(--text-muted)] mb-1.5 tracking-wide">SECRET KEY</label>
+                <input
+                  type="password"
+                  value={secretAccessKey()}
+                  onInput={(e) => setSecretAccessKey(e.currentTarget.value)}
+                  placeholder="••••••••"
+                  class="input font-mono text-sm"
+                />
+              </div>
+            </div>
+            
+            <div>
+              <label class="block font-mono text-xs text-[var(--text-muted)] mb-1.5 tracking-wide">BUCKET</label>
+              <input
+                type="text"
+                value={bucketName()}
+                onInput={(e) => setBucketName(e.currentTarget.value)}
+                placeholder="my-bucket"
+                class="input font-mono text-sm"
+              />
+            </div>
+            
+            <Show when={error()}>
+              <div class="flex items-center gap-2 text-[var(--error)] text-sm font-mono">
+                <span class="led led-red"></span>
+                {error()}
+              </div>
+            </Show>
+            
+            <button
+              type="button"
+              onClick={handleConnect}
+              disabled={loading() || !endpoint() || !accessKeyId() || !secretAccessKey() || !bucketName()}
+              class="btn-primary w-full font-mono text-sm tracking-wide"
+            >
+              {loading() ? "INITIALIZING..." : "ESTABLISH CONNECTION"}
+            </button>
           </div>
-          
-          <div>
-            <label class="block text-sm text-gray-400 mb-1">Access Key ID</label>
-            <input
-              type="text"
-              value={accessKeyId()}
-              onInput={(e) => setAccessKeyId(e.currentTarget.value)}
-              placeholder="Access Key ID"
-              class="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded text-white text-sm focus:outline-none focus:border-sky-500"
-            />
-          </div>
-          
-          <div>
-            <label class="block text-sm text-gray-400 mb-1">Secret Access Key</label>
-            <input
-              type="password"
-              value={secretAccessKey()}
-              onInput={(e) => setSecretAccessKey(e.currentTarget.value)}
-              placeholder="Secret Access Key"
-              class="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded text-white text-sm focus:outline-none focus:border-sky-500"
-            />
-          </div>
-          
-          <div>
-            <label class="block text-sm text-gray-400 mb-1">Bucket Name</label>
-            <input
-              type="text"
-              value={bucketName()}
-              onInput={(e) => setBucketName(e.currentTarget.value)}
-              placeholder="my-bucket"
-              class="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded text-white text-sm focus:outline-none focus:border-sky-500"
-            />
-          </div>
-          
-          <Show when={error()}>
-            <p class="text-red-400 text-sm">{error()}</p>
-          </Show>
-          
-          <button
-            type="button"
-            onClick={handleConnect}
-            disabled={loading() || !endpoint() || !accessKeyId() || !secretAccessKey() || !bucketName()}
-            class="px-4 py-2 bg-sky-600 hover:bg-sky-500 disabled:bg-slate-600 disabled:cursor-not-allowed text-white rounded text-sm font-medium transition-colors"
-          >
-            {loading() ? "Connecting..." : "Connect"}
-          </button>
         </div>
       </Show>
     </div>

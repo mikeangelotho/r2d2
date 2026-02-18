@@ -31,26 +31,34 @@ export default function FileBrowser(props: Props) {
   });
 
   return (
-    <div class="bg-slate-800 rounded-lg p-4">
-      <div class="flex items-center justify-between mb-3">
-        <h2 class="text-white font-medium">JSON Files</h2>
+    <div class="glass-elevated rounded-lg overflow-hidden h-full flex flex-col">
+      <div class="flex items-center justify-between px-4 py-3 border-b border-[var(--border-subtle)]">
+        <div class="flex items-center gap-2">
+          <span class="font-mono text-xs text-[var(--text-muted)] tracking-wide">▸</span>
+          <span class="font-mono text-xs tracking-wider text-[var(--accent)]">FILES</span>
+          <span class="font-mono text-xs text-[var(--text-muted)]">[{files().length}]</span>
+        </div>
         <button
           type="button"
           onClick={loadFiles}
           disabled={loading()}
-          class="text-sky-400 hover:text-sky-300 text-sm disabled:opacity-50"
+          class="text-[var(--text-muted)] hover:text-[var(--accent)] transition-colors font-mono text-xs disabled:opacity-50"
         >
-          {loading() ? "Loading..." : "Refresh"}
+          {loading() ? "LOADING" : "↻"}
         </button>
       </div>
       
       <Show when={error()}>
-        <p class="text-red-400 text-sm mb-2">{error()}</p>
+        <div class="px-4 py-3 border-b border-[var(--border-subtle)]">
+          <span class="text-[var(--error)] font-mono text-xs">ERR: {error()}</span>
+        </div>
       </Show>
       
-      <div class="space-y-1 max-h-96 overflow-y-auto">
+      <div class="flex-1 overflow-y-auto">
         <Show when={files().length === 0 && !loading() && !error()}>
-          <p class="text-gray-500 text-sm">No JSON files found</p>
+          <div class="px-4 py-8 text-center">
+            <span class="font-mono text-xs text-[var(--text-muted)]">NO FILES FOUND</span>
+          </div>
         </Show>
         
         <For each={files()}>
@@ -58,16 +66,30 @@ export default function FileBrowser(props: Props) {
             <button
               type="button"
               onClick={() => props.onFileSelect(file.key)}
-              class={`w-full text-left px-3 py-2 rounded text-sm transition-colors ${
+              class={`w-full text-left px-4 py-2.5 border-b border-[var(--border-subtle)] transition-all group ${
                 props.selectedFile === file.key
-                  ? "bg-sky-600 text-white"
-                  : "text-gray-300 hover:bg-slate-700"
+                  ? "bg-[var(--accent-subtle)] border-l-2 border-l-[var(--accent)]"
+                  : "hover:bg-[var(--bg-elevated)] border-l-2 border-l-transparent"
               }`}
             >
-              <span class="truncate block">{file.key}</span>
-              <Show when={file.size !== undefined}>
-                <span class="text-xs text-gray-500">
-                  {(file.size! / 1024).toFixed(1)} KB
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2 min-w-0">
+                  <span class="text-[var(--accent)] font-mono text-xs">›</span>
+                  <span class={`font-mono text-xs truncate ${
+                    props.selectedFile === file.key ? "text-[var(--accent)]" : "text-[var(--text-primary)]"
+                  }`}>
+                    {file.key.split("/").pop()}
+                  </span>
+                </div>
+                <Show when={file.size !== undefined}>
+                  <span class="font-mono text-xs text-[var(--text-muted)] ml-2 shrink-0">
+                    {(file.size! / 1024).toFixed(1)}K
+                  </span>
+                </Show>
+              </div>
+              <Show when={file.key.includes("/")}>
+                <span class="font-mono text-xs text-[var(--text-muted)] opacity-50 pl-5">
+                  {file.key.split("/").slice(0, -1).join("/")}
                 </span>
               </Show>
             </button>
