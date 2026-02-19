@@ -4,9 +4,22 @@ type JsonValue = string | number | boolean | null | JsonObject | JsonArray;
 type JsonObject = { [key: string]: JsonValue };
 type JsonArray = JsonValue[];
 
+type JsonType = "string" | "number" | "boolean" | "null" | "object" | "array";
+
 interface Props {
   data: unknown;
   onChange: (path: string[], value: JsonValue) => void;
+}
+
+function getDefaultValue(type: JsonType): JsonValue {
+  switch (type) {
+    case "string": return "";
+    case "number": return 0;
+    case "boolean": return false;
+    case "null": return null;
+    case "object": return {};
+    case "array": return [];
+  }
 }
 
 function flattenObject(obj: unknown, prefix = ""): Array<{ path: string; key: string; value: JsonValue; type: string }> {
@@ -122,8 +135,46 @@ function TableRow(props: { entry: { path: string; key: string; value: JsonValue;
   );
 }
 
+function TypeSelector(props: { onSelect: (type: JsonType) => void; onClose: () => void }) {
+  const types: JsonType[] = ["string", "number", "boolean", "null", "object", "array"];
+  
+  return (
+    <div class="absolute z-20 bg-slate-800 border border-slate-600 rounded shadow-lg py-1 min-w-[120px]">
+      <For each={types}>
+        {(type) => (
+          <button
+            type="button"
+            onClick={() => props.onSelect(type)}
+            class="w-full text-left px-3 py-1.5 text-sm font-mono hover:bg-slate-700 text-white capitalize"
+          >
+            {type}
+          </button>
+        )}
+      </For>
+      <div class="border-t border-slate-600 mt-1 pt-1">
+        <button
+          type="button"
+          onClick={props.onClose}
+          class="w-full text-left px-3 py-1.5 text-sm font-mono hover:bg-slate-700 text-gray-400"
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export default function JsonTableView(props: Props) {
+  const [showTypeSelector, setShowTypeSelector] = createSignal(false);
   const flattened = createMemo(() => flattenObject(props.data));
+  
+  const isObject = (val: unknown): val is JsonObject => {
+    return val !== null && typeof val === "object" && !Array.isArray(val);
+  };
+  
+  const isArray = (val: unknown): val is JsonArray => {
+    return Array.isArray(val);
+  };
   
   const updateAtPath = (obj: unknown, path: string[], value: JsonValue): unknown => {
     if (path.length === 0) return value;
@@ -149,8 +200,66 @@ export default function JsonTableView(props: Props) {
     props.onChange([], newData as JsonValue);
   };
   
+  const handleAddProperty = (jsonType: JsonType) => {
+    if (!isObject(props.data)) return;
+    
+    let newKeyName = "new_field";
+    let counter = 1;
+    
+    while (newKeyName in (props.data as JsonObject)) {
+      newKeyName = `new_field_${counter++}`;
+    }
+    
+    const newValue = getDefaultValue(jsonType);
+    const updatedObj: JsonObject = { ...(props.data as JsonObject), [newKeyName]: newValue };
+    props.onChange([], updatedObj as JsonValue);
+    setShowTypeSelector(false);
+  };
+
+  const handleAddArrayItem = (jsonType: JsonType) => {
+    if (!isArray(props.data)) return;
+    
+    const newValue = getDefaultValue(jsonType);
+    const updatedArray: JsonArray = [...(props.data as JsonArray), newValue];
+    props.onChange([], updatedArray as JsonValue);
+    setShowTypeSelector(false);
+  };
+
+  const handleTypeSelect = (jsonType: JsonType) => {
+    if (isObject(props.data)) {
+      handleAddProperty(jsonType);
+    } else if (isArray(props.data)) {
+      handleAddArrayItem(jsonType);
+    }
+  };
+
+  const handleDuplicateEntry = () => {
+    if (isArray(props.data)) {
+      const currentArray = props.data as JsonArray;
+      if (currentArray.length > 0) {
+        const lastItem = currentArray[currentArray.length - 1];
+        const clonedValue = JSON.parse(JSON.stringify(lastItem));
+        const updatedArray: JsonArray = [...currentArray, clonedValue];
+        props.onChange([], updatedArray as JsonValue);
+      }
+    }
+  };
+  
   return (
     <div class="overflow-auto max-h-full">
+      <div class="flex items-center justify-between mb-2 pr-2">
+        <span class="text-gray-500 text-xs uppercase tracking-wide">Table View</span>
+        <Show when={isArray(props.data) && (props.data as JsonArray).length > 0}>
+          <button
+            type="button"
+            onClick={handleDuplicateEntry}
+            class="flex items-center gap-1 px-2 py-1 text-xs font-mono text-blue-400 hover:bg-slate-700/50 rounded border border-slate-600 bg-slate-800"
+            title="Duplicate last entry"
+          >
+            ⧉ Duplicate Last Entry
+          </button>
+        </Show>
+      </div>
       <table class="w-full text-left border-collapse">
         <thead class="sticky top-0 bg-slate-800">
           <tr class="border-b border-slate-600">
@@ -167,9 +276,26 @@ export default function JsonTableView(props: Props) {
           </For>
         </tbody>
       </table>
+      
       <Show when={flattened().length === 0}>
         <p class="text-gray-500 text-center py-4">No editable values</p>
       </Show>
+      
+      <div class="mt-2 pt-2 border-t border-slate-700 relative">
+        <button
+          type="button"
+          onClick={() => setShowTypeSelector(!showTypeSelector())}
+          class="flex items-center gap-1 px-3 py-2 text-sm font-mono text-[var(--accent)] hover:bg-slate-700/50 rounded"
+        >
+          + {isArray(props.data) ? "Add Item" : "Add Property"}
+        </button>
+        <Show when={showTypeSelector()}>
+          <TypeSelector 
+            onSelect={handleTypeSelect} 
+            onClose={() => setShowTypeSelector(false)} 
+          />
+        </Show>
+      </div>
     </div>
   );
 }

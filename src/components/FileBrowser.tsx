@@ -6,6 +6,7 @@ interface Props {
   onFileSelect: (key: string) => void;
   selectedFile: string | null;
   refreshTrigger: number;
+  onCreateFromTemplate?: (key: string) => void;
 }
 
 export default function FileBrowser(props: Props) {
@@ -32,21 +33,33 @@ export default function FileBrowser(props: Props) {
 
   return (
     <div class="glass-elevated rounded-lg overflow-hidden h-full flex flex-col">
-      <div class="flex items-center justify-between px-4 py-3 border-b border-[var(--border-subtle)]">
-        <div class="flex items-center gap-2">
-          <span class="font-mono text-xs text-[var(--text-muted)] tracking-wide">▸</span>
-          <span class="font-mono text-xs tracking-wider text-[var(--accent)]">FILES</span>
-          <span class="font-mono text-xs text-[var(--text-muted)]">[{files().length}]</span>
+        <div class="flex items-center justify-between px-4 py-3 border-b border-[var(--border-subtle)]">
+          <div class="flex items-center gap-2">
+            <span class="font-mono text-xs text-[var(--text-muted)] tracking-wide">▸</span>
+            <span class="font-mono text-xs tracking-wider text-[var(--accent)]">FILES</span>
+            <span class="font-mono text-xs text-[var(--text-muted)]">[{files().length}]</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <Show when={props.onCreateFromTemplate}>
+              <button
+                type="button"
+                onClick={() => props.onCreateFromTemplate!("")}
+                class="text-[var(--accent)] hover:text-[var(--accent)] transition-colors font-mono text-xs"
+                title="Create from Template"
+              >
+                + NEW
+              </button>
+            </Show>
+            <button
+              type="button"
+              onClick={loadFiles}
+              disabled={loading()}
+              class="text-[var(--text-muted)] hover:text-[var(--accent)] transition-colors font-mono text-xs disabled:opacity-50"
+            >
+              {loading() ? "LOADING" : "↻"}
+            </button>
+          </div>
         </div>
-        <button
-          type="button"
-          onClick={loadFiles}
-          disabled={loading()}
-          class="text-[var(--text-muted)] hover:text-[var(--accent)] transition-colors font-mono text-xs disabled:opacity-50"
-        >
-          {loading() ? "LOADING" : "↻"}
-        </button>
-      </div>
       
       <Show when={error()}>
         <div class="px-4 py-3 border-b border-[var(--border-subtle)]">

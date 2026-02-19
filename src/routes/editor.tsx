@@ -5,6 +5,8 @@ import FileBrowser from "~/components/FileBrowser";
 import JsonTreeView from "~/components/JsonTreeView";
 import JsonTableView from "~/components/JsonTableView";
 import PreviewPane from "~/components/PreviewPane";
+import TemplatePicker from "~/components/TemplatePicker";
+import NestedViewModal from "~/components/NestedViewModal";
 
 type ViewMode = "tree" | "table" | "preview";
 
@@ -18,6 +20,10 @@ export default function Editor() {
   const [success, setSuccess] = createSignal("");
   const [viewMode, setViewMode] = createSignal<ViewMode>("tree");
   const [refreshKey, setRefreshKey] = createSignal(0);
+  const [showTemplatePicker, setShowTemplatePicker] = createSignal(false);
+  const [templatePickerExistingKey, setTemplatePickerExistingKey] = createSignal<string | null>(null);
+  const [templatePickerExistingData, setTemplatePickerExistingData] = createSignal<Record<string, unknown> | null>(null);
+  const [nestedViewPath, setNestedViewPath] = createSignal<string[] | null>(null);
   
   const hasChanges = () => {
     return JSON.stringify(jsonData()) !== JSON.stringify(originalData());
@@ -47,6 +53,54 @@ export default function Editor() {
   
   const handleDataChange = (_path: string[], newData: unknown) => {
     setJsonData(newData);
+  };
+  
+  const handleNodeClick = (path: string[], _value: unknown) => {
+    setNestedViewPath(path);
+  };
+  
+  const handleNestedSave = (path: string[], newData: unknown) => {
+    const updateAtPath = (obj: unknown, p: string[], value: unknown): unknown => {
+      if (p.length === 0) return value;
+      
+      const newObj = Array.isArray(obj) ? [...obj] : { ...(obj as Record<string, unknown>) };
+      const [first, ...rest] = p;
+      
+      if (rest.length === 0) {
+        (newObj as Record<string, unknown>)[first] = value;
+      } else {
+        (newObj as Record<string, unknown>)[first] = updateAtPath(
+          (newObj as Record<string, unknown>)[first],
+          rest,
+          value
+        );
+      }
+      
+      return newObj;
+    };
+    
+    const updated = updateAtPath(jsonData(), path, newData);
+    setJsonData(updated);
+  };
+  
+  const handleNestedDrillDown = (path: string[]) => {
+    setNestedViewPath(path);
+  };
+  
+  const handleTemplateCreated = (key: string) => {
+    setShowTemplatePicker(false);
+    setTemplatePickerExistingKey(null);
+    setTemplatePickerExistingData(null);
+    setRefreshKey(k => k + 1);
+    handleFileSelect(key);
+  };
+  
+  const handleAddFromTemplate = () => {
+    if (selectedFile() && jsonData() && typeof jsonData() === "object" && !Array.isArray(jsonData())) {
+      setTemplatePickerExistingKey(selectedFile());
+      setTemplatePickerExistingData(jsonData() as Record<string, unknown>);
+    }
+    setShowTemplatePicker(true);
   };
   
   const handleSave = async () => {
@@ -96,10 +150,10 @@ export default function Editor() {
         <div class="grid grid-cols-1 lg:grid-cols-5 gap-4">
           <div class="lg:col-span-1 min-h-[500px]">
             <FileBrowser
-              key={refreshKey()}
               selectedFile={selectedFile()}
               onFileSelect={handleFileSelect}
               refreshTrigger={refreshKey()}
+              onCreateFromTemplate={() => setShowTemplatePicker(true)}
             />
           </div>
           
@@ -183,7 +237,7 @@ export default function Editor() {
                 <Show when={!loading() && jsonData()}>
                   <div class="h-[calc(100vh-380px)] overflow-auto p-4">
                     <Show when={viewMode() === "tree"}>
-                      <JsonTreeView data={jsonData()!} onChange={handleDataChange} />
+                      <JsonTreeView data={jsonData()!} onChange={handleDataChange} onNodeClick={handleNodeClick} />
                     </Show>
                     <Show when={viewMode() === "table"}>
                       <JsonTableView data={jsonData()!} onChange={handleDataChange} />
@@ -212,6 +266,15 @@ export default function Editor() {
                     >
                       DOWNLOAD
                     </button>
+                    <button
+                      type="button"
+                      onClick={handleAddFromTemplate}
+                      disabled={!jsonData()}
+                      class="btn-secondary font-mono text-xs"
+                      title="Add fields from template to current file"
+                    >
+                      + TEMPLATE
+                    </button>
                   </div>
                   <div class="font-mono text-xs text-[var(--text-muted)]">
                     {hasChanges() ? "UNSAVED CHANGES" : "ALL CHANGES SAVED"}
@@ -221,6 +284,30 @@ export default function Editor() {
             </Show>
           </div>
         </div>
+
+        <Show when={showTemplatePicker()}>
+          <TemplatePicker
+            onClose={() => {
+              setShowTemplatePicker(false);
+              setTemplatePickerExistingKey(null);
+              setTemplatePickerExistingData(null);
+            }}
+            onCreated={handleTemplateCreated}
+            existingFile={templatePickerExistingKey()}
+            existingData={templatePickerExistingData() as any}
+          />
+        </Show>
+
+        <Show when={nestedViewPath() !== null && jsonData()}>
+          <NestedViewModal
+            data={jsonData()!}
+            rootData={jsonData()!}
+            basePath={nestedViewPath()!}
+            onClose={() => setNestedViewPath(null)}
+            onSave={handleNestedSave}
+            onDrillDown={handleNestedDrillDown}
+          />
+        </Show>
       </div>
     </div>
   );
