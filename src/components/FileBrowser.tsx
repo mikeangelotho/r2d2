@@ -14,6 +14,7 @@ export default function FileBrowser(props: Props) {
   const [loading, setLoading] = createSignal(false);
   const [error, setError] = createSignal("");
   const [isOpen, setIsOpen] = createSignal(false);
+  const [bucketName, setBucketName] = createSignal<string | undefined>(undefined);
   
   const loadFiles = async () => {
     setLoading(true);
@@ -30,6 +31,7 @@ export default function FileBrowser(props: Props) {
 
   onMount(() => {
     loadFiles();
+    setBucketName(localStorage.getItem("r2_bucket_name") || undefined);
   });
 
   createEffect(() => {
@@ -44,6 +46,11 @@ export default function FileBrowser(props: Props) {
 
   return (
     <div class="relative">
+      <Show when={bucketName()}>
+        <div class="text-xs text-[var(--text-muted)] mb-1 px-1">
+          {bucketName()}
+        </div>
+      </Show>
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen())}

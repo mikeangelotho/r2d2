@@ -52,6 +52,21 @@ function getDefaultValue(type: JsonType): JsonValue {
   }
 }
 
+function TypeIcon(props: { type: string }) {
+  const icons: Record<string, string> = {
+    string: "M4 7h16M4 12h16M4 17h10",
+    number: "M7 20l4-16m2 16l4-16M6 9h14M4 15h14",
+    boolean: "M8 9l4-4 4 4m0 6l-4 4-4-4",
+    null: "M18 12H6m12 0a12 12 0 100-24 12 12 0 000 24z",
+  };
+  
+  return (
+    <svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d={icons[props.type] || icons.string} />
+    </svg>
+  );
+}
+ 
 function ValueEditor(props: { value: JsonValue; path: string[]; onChange: (path: string[], value: JsonValue) => void }) {
   const [editing, setEditing] = createSignal(false);
   const [editValue, setEditValue] = createSignal("");
@@ -85,31 +100,27 @@ function ValueEditor(props: { value: JsonValue; path: string[]; onChange: (path:
 
   const type = () => getType(props.value);
 
-  const colorClass = () => {
-    switch (type()) {
-      case "string": return "text-green-400";
-      case "number": return "text-blue-400";
-      case "boolean": return "text-purple-400";
-      case "null": return "text-gray-500";
-      default: return "text-white";
-    }
-  };
-
   return (
     <Show
       when={editing()}
       fallback={
-        <span
-          class="cursor-pointer hover:bg-[var(--bg-tertiary)] px-1 rounded text-sm"
-          onClick={startEdit}
-        >
-          <Show when={type() === "string"}>
-            "{String(props.value)}"
-          </Show>
-          <Show when={type() !== "string"}>
-            {String(props.value)}
-          </Show>
-        </span>
+        <div class="flex items-center gap-2 group">
+          <span class={`type-badge type-${type()}`}>
+            <TypeIcon type={type()} />
+            {type()}
+          </span>
+          <span
+            class="cursor-pointer hover:bg-[var(--bg-tertiary)] px-1.5 py-0.5 rounded text-sm font-mono"
+            onClick={startEdit}
+          >
+            <Show when={type() === "string"}>
+              "{String(props.value)}"
+            </Show>
+            <Show when={type() !== "string"}>
+              {String(props.value)}
+            </Show>
+          </span>
+        </div>
       }
     >
       <input
@@ -262,7 +273,7 @@ function TreeNode(props: { keyName: string; value: JsonValue; path: string[]; on
         
         <Show when={type() === "object" || type() === "array"}>
           <span 
-            class="text-[var(--text-muted)] text-sm cursor-pointer hover:text-[var(--accent)]"
+            class={`type-badge type-${type()} cursor-pointer hover:opacity-80`}
             onClick={handleNodeClick}
           >
             {collapsed() ? (
