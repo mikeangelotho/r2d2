@@ -147,18 +147,18 @@ export default function Editor() {
   };
   
   return (
-    <div class="min-h-screen bg-[var(--bg-primary)] p-4 max-w-5xl mx-auto">
+    <div class="min-h-screen bg-[var(--bg-primary)] p-3 max-w-5xl mx-auto">
       <R2Config onConnected={handleConnected} />
       
       <Show when={!selectedFile()}>
-        <div class="card p-12 text-center">
+        <div class="card p-6 text-center">
           <p class="text-sm text-[var(--text-muted)]">Select a file to begin</p>
         </div>
       </Show>
       
       <Show when={selectedFile()}>
         <div class="card overflow-hidden">
-          <div class="flex items-center justify-between px-4 py-3 border-b border-[var(--border-subtle)]">
+          <div class="flex items-center justify-between px-3 py-2 border-b border-[var(--border-subtle)]">
             <div class="flex items-center gap-3 min-w-0">
               <span class="text-sm text-[var(--text-primary)] truncate">{selectedFile()?.split("/").pop()}</span>
               <Show when={hasChanges()}>
@@ -188,14 +188,14 @@ export default function Editor() {
               </Show>
             </div>
             
-            <div class="flex items-center gap-1">
+            <div class="flex items-center gap-0.5 p-0.5 bg-[var(--bg-tertiary)] rounded-lg">
               <button
                 type="button"
                 onClick={() => setViewMode("tree")}
-                class={`px-3 py-1 rounded-full text-xs transition-colors ${
+                class={`px-2 py-1 rounded text-xs transition-colors ${
                   viewMode() === "tree"
-                    ? "bg-[var(--accent)] text-white"
-                    : "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)]"
+                    ? "bg-[var(--bg-primary)] text-[var(--text-primary)] shadow-sm"
+                    : "text-[var(--text-muted)] hover:text-[var(--text-secondary)]"
                 }`}
               >
                 Tree
@@ -203,10 +203,10 @@ export default function Editor() {
               <button
                 type="button"
                 onClick={() => setViewMode("table")}
-                class={`px-3 py-1 rounded-full text-xs transition-colors ${
+                class={`px-2 py-1 rounded text-xs transition-colors ${
                   viewMode() === "table"
-                    ? "bg-[var(--accent)] text-white"
-                    : "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)]"
+                    ? "bg-[var(--bg-primary)] text-[var(--text-primary)] shadow-sm"
+                    : "text-[var(--text-muted)] hover:text-[var(--text-secondary)]"
                 }`}
               >
                 Table
@@ -214,13 +214,13 @@ export default function Editor() {
               <button
                 type="button"
                 onClick={() => setViewMode("preview")}
-                class={`px-3 py-1 rounded-full text-xs transition-colors ${
+                class={`px-2 py-1 rounded text-xs transition-colors ${
                   viewMode() === "preview"
-                    ? "bg-[var(--accent)] text-white"
-                    : "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)]"
+                    ? "bg-[var(--bg-primary)] text-[var(--text-primary)] shadow-sm"
+                    : "text-[var(--text-muted)] hover:text-[var(--text-secondary)]"
                 }`}
               >
-                Preview
+                Raw
               </button>
             </div>
           </div>
@@ -274,7 +274,7 @@ export default function Editor() {
           </Show>
           
           <Show when={!loading() && jsonData()}>
-            <div class="h-[60vh] overflow-auto p-4">
+            <div class="h-[50vh] overflow-auto p-3">
               <Show when={viewMode() === "tree"}>
                 <JsonTreeView data={jsonData()!} onChange={handleDataChange} onNodeClick={handleNodeClick} />
               </Show>
@@ -287,7 +287,7 @@ export default function Editor() {
             </div>
           </Show>
           
-          <div class="flex items-center justify-between px-4 py-3 border-t border-[var(--border-subtle)]">
+          <div class="flex items-center justify-between px-3 py-2 border-t border-[var(--border-subtle)]">
             <div class="flex items-center gap-2">
               <button
                 type="button"
@@ -324,7 +324,7 @@ export default function Editor() {
         </div>
       </Show>
 
-      <div class="mt-4">
+      <div class="mt-3">
         <FileBrowser
           selectedFile={selectedFile()}
           onFileSelect={handleFileSelect}

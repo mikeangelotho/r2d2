@@ -47,7 +47,7 @@ export default function FileBrowser(props: Props) {
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen())}
-        class="w-full flex items-center justify-between card px-3 py-2 text-left hover:border-[var(--border-subtle-hover)] transition-colors"
+        class="w-full flex items-center justify-between card px-2 py-1.5 text-left hover:border-[var(--border-subtle-hover)] transition-colors"
       >
         <div class="flex items-center gap-2 min-w-0">
           <Show when={props.selectedFile} fallback={<span class="text-[var(--text-muted)]">Select file...</span>}>
@@ -60,8 +60,8 @@ export default function FileBrowser(props: Props) {
       </button>
       
       <Show when={isOpen()}>
-        <div class="absolute top-full left-0 right-0 mt-1 card max-h-64 overflow-y-auto z-20 shadow-lg">
-          <div class="sticky top-0 flex items-center justify-between px-3 py-2 border-b border-[var(--border-subtle)] bg-[var(--bg-secondary)]">
+        <div class="absolute top-full left-0 right-0 mt-1 card max-h-48 overflow-y-auto z-20 shadow-lg">
+          <div class="sticky top-0 flex items-center justify-between px-2 py-1.5 border-b border-[var(--border-subtle)] bg-[var(--bg-secondary)]">
             <span class="text-xs text-[var(--text-muted)]">{files().length} files</span>
             <div class="flex items-center gap-2">
               <Show when={props.onCreateFromTemplate}>
@@ -103,7 +103,7 @@ export default function FileBrowser(props: Props) {
                   props.onFileSelect(file.key);
                   setIsOpen(false);
                 }}
-                class={`w-full text-left px-3 py-2 text-sm border-b border-[var(--border-subtle)] last:border-0 transition-colors ${
+                class={`w-full text-left px-2 py-1.5 text-sm border-b border-[var(--border-subtle)] last:border-0 transition-colors ${
                   props.selectedFile === file.key
                     ? "bg-[var(--accent-subtle)] text-[var(--accent)]"
                     : "hover:bg-[var(--bg-tertiary)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]"

@@ -18,7 +18,7 @@ export default function Nav(props: Props) {
   });
 
   return (
-    <nav class="flex items-center justify-between px-4 py-2 border-b border-[var(--border-subtle)] bg-[var(--bg-secondary)]">
+    <nav class="flex items-center justify-between px-3 py-1.5 border-b border-[var(--border-subtle)] bg-[var(--bg-secondary)]">
       <div class="flex items-center gap-2">
         <span class="text-sm font-semibold text-[var(--text-primary)]">r2d2</span>
       </div>

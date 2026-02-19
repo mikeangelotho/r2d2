@@ -13,7 +13,7 @@ export default function App() {
       root={props => (
         <>
           <Nav onConnected={() => setRefreshKey(k => k + 1)} />
-          <div class="pt-8">
+          <div class="pt-4">
             <Suspense fallback={<div class="p-4 text-sm text-[var(--text-muted)]">Loading...</div>}>
               {props.children}
             </Suspense>
