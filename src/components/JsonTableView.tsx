@@ -52,18 +52,28 @@ function isArray(val: unknown): val is JsonArray {
 
 function getDefaultValue(type: JsonType): JsonValue {
   switch (type) {
-    case "string": return "";
-    case "number": return 0;
-    case "boolean": return false;
-    case "null": return null;
-    case "object": return {};
-    case "array": return [];
+    case "string":
+      return "";
+    case "number":
+      return 0;
+    case "boolean":
+      return false;
+    case "null":
+      return null;
+    case "object":
+      return {};
+    case "array":
+      return [];
   }
 }
 
-function buildTableEntries(obj: unknown, path: string[] = [], key: string = "root"): TableEntry[] {
+function buildTableEntries(
+  obj: unknown,
+  path: string[] = [],
+  key: string = "root",
+): TableEntry[] {
   const entries: TableEntry[] = [];
-  const type = getType(obj);
+  const type = getType(obj as JsonValue);
 
   if (type === "object") {
     const objVal = obj as JsonObject;
@@ -73,7 +83,7 @@ function buildTableEntries(obj: unknown, path: string[] = [], key: string = "roo
     for (const k of keys) {
       const val = objVal[k];
       const valType = getType(val);
-      
+
       if (valType === "object" || valType === "array") {
         childEntries.push(...buildTableEntries(val, [...path, k], k));
       } else {
@@ -91,7 +101,7 @@ function buildTableEntries(obj: unknown, path: string[] = [], key: string = "roo
       entries.push({
         key,
         path,
-        value: obj,
+        value: obj as JsonValue,
         type: "object",
         isGroup: true,
         children: childEntries,
@@ -121,7 +131,7 @@ function buildTableEntries(obj: unknown, path: string[] = [], key: string = "roo
     entries.push({
       key,
       path,
-      value: obj,
+      value: obj as JsonValue,
       type: "array",
       isGroup: true,
       children: childEntries,
@@ -130,7 +140,7 @@ function buildTableEntries(obj: unknown, path: string[] = [], key: string = "roo
     entries.push({
       key,
       path,
-      value: obj,
+      value: obj as JsonValue,
       type,
       isGroup: false,
     });
@@ -139,7 +149,11 @@ function buildTableEntries(obj: unknown, path: string[] = [], key: string = "roo
   return entries;
 }
 
-function ValueEditor(props: { value: JsonValue; path: string[]; onChange: (path: string[], value: JsonValue) => void }) {
+function ValueEditor(props: {
+  value: JsonValue;
+  path: string[];
+  onChange: (path: string[], value: JsonValue) => void;
+}) {
   const [editing, setEditing] = createSignal(false);
   const [editValue, setEditValue] = createSignal("");
 
@@ -150,7 +164,7 @@ function ValueEditor(props: { value: JsonValue; path: string[]; onChange: (path:
 
   const saveEdit = () => {
     let newValue: JsonValue = editValue();
-    
+
     if (editValue() === "null") {
       newValue = null;
     } else if (editValue() === "true") {
@@ -160,7 +174,7 @@ function ValueEditor(props: { value: JsonValue; path: string[]; onChange: (path:
     } else if (!isNaN(Number(editValue()))) {
       newValue = Number(editValue());
     }
-    
+
     props.onChange(props.path, newValue);
     setEditing(false);
   };
@@ -169,29 +183,8 @@ function ValueEditor(props: { value: JsonValue; path: string[]; onChange: (path:
     setEditing(false);
   };
 
-  const colorClass = () => {
-    switch (props.type) {
-      case "string": return "text-green-400";
-      case "number": return "text-blue-400";
-      case "boolean": return "text-purple-400";
-      case "null": return "text-gray-500";
-      default: return "text-white";
-    }
-  };
-
   return (
-    <Show
-      when={editing()}
-      fallback={
-        <span
-          class="cursor-pointer hover:bg-[var(--bg-tertiary)] px-1 rounded text-sm"
-          onClick={startEdit}
-        >
-          <Show when={props.type === "string"}>"{String(props.value)}"</Show>
-          <Show when={props.type !== "string"}>{String(props.value)}</Show>
-        </span>
-      }
-    >
+    <Show when={editing()}>
       <input
         type="text"
         value={editValue()}
@@ -208,9 +201,19 @@ function ValueEditor(props: { value: JsonValue; path: string[]; onChange: (path:
   );
 }
 
-function TypeSelector(props: { onSelect: (type: JsonType) => void; onClose: () => void }) {
-  const types: JsonType[] = ["string", "number", "boolean", "null", "object", "array"];
-  
+function TypeSelector(props: {
+  onSelect: (type: JsonType) => void;
+  onClose: () => void;
+}) {
+  const types: JsonType[] = [
+    "string",
+    "number",
+    "boolean",
+    "null",
+    "object",
+    "array",
+  ];
+
   return (
     <div class="absolute z-20 bg-[var(--bg-elevated)] border border-[var(--border-subtle)] rounded shadow-lg py-1 min-w-[120px]">
       <For each={types}>
@@ -237,8 +240,8 @@ function TypeSelector(props: { onSelect: (type: JsonType) => void; onClose: () =
   );
 }
 
-function TableRow(props: { 
-  entry: TableEntry; 
+function TableRow(props: {
+  entry: TableEntry;
   depth: number;
   onChange: (path: string[], value: JsonValue) => void;
   onNodeClick?: (path: string[], value: JsonValue) => void;
@@ -260,13 +263,15 @@ function TableRow(props: {
 
   const startEdit = () => {
     if (props.entry.isGroup) return;
-    setEditValue(props.entry.value === null ? "null" : String(props.entry.value));
+    setEditValue(
+      props.entry.value === null ? "null" : String(props.entry.value),
+    );
     setEditing(true);
   };
 
   const saveEdit = () => {
     let newValue: JsonValue = editValue();
-    
+
     if (editValue() === "null") {
       newValue = null;
     } else if (editValue() === "true") {
@@ -276,7 +281,7 @@ function TableRow(props: {
     } else if (!isNaN(Number(editValue()))) {
       newValue = Number(editValue());
     }
-    
+
     props.onChange(props.entry.path, newValue);
     setEditing(false);
   };
@@ -305,18 +310,23 @@ function TableRow(props: {
   };
 
   const handleCopy = async () => {
-    const valueToCopy = props.entry.isGroup 
+    const valueToCopy = props.entry.isGroup
       ? JSON.stringify(props.entry.value, null, 2)
-      : (props.entry.value === null ? "null" : String(props.entry.value));
+      : props.entry.value === null
+        ? "null"
+        : String(props.entry.value);
     await navigator.clipboard.writeText(valueToCopy);
   };
 
   const handleGroupClick = () => {
     if (props.entry.isGroup && props.onNodeClick) {
-      const groupPath = props.entry.path.length > 0 ? props.entry.path.slice(0, -1) : [];
+      const groupPath =
+        props.entry.path.length > 0 ? props.entry.path.slice(0, -1) : [];
       const parentObj = getValueAtPath(
-        props.entry.path.length > 0 ? getValueAtPath({}, groupPath.slice(0, -1)) : {},
-        groupPath
+        props.entry.path.length > 0
+          ? getValueAtPath({}, groupPath.slice(0, -1))
+          : {},
+        groupPath,
       );
       if (parentObj && typeof parentObj === "object") {
         props.onNodeClick(props.entry.path, props.entry.value);
@@ -326,23 +336,31 @@ function TableRow(props: {
 
   const colorClass = () => {
     switch (props.entry.type) {
-      case "string": return "text-green-400";
-      case "number": return "text-blue-400";
-      case "boolean": return "text-purple-400";
-      case "null": return "text-gray-500";
-      default: return "text-white";
+      case "string":
+        return "text-green-400";
+      case "number":
+        return "text-blue-400";
+      case "boolean":
+        return "text-purple-400";
+      case "null":
+        return "text-gray-500";
+      default:
+        return "text-white";
     }
   };
 
   const getChildCount = () => {
     if (!props.entry.children) return 0;
-    return props.entry.children.filter(c => !c.isGroup).length;
+    return props.entry.children.filter((c) => !c.isGroup).length;
   };
 
   return (
     <>
       <tr class="border-b border-[var(--border-subtle)] hover:bg-[var(--bg-tertiary)] group">
-        <td class="py-2 px-3" style={{ "padding-left": `${props.depth * 24 + 12}px` }}>
+        <td
+          class="py-2 px-3"
+          style={{ "padding-left": `${props.depth * 24 + 12}px` }}
+        >
           <Show when={props.entry.isGroup}>
             <button
               type="button"
@@ -355,15 +373,18 @@ function TableRow(props: {
           <Show when={!props.entry.isGroup}>
             <span class="w-4 inline-block mr-1" />
           </Show>
-          
-          <Show when={editingKey()} fallback={
-            <span 
-              class="text-yellow-400 font-mono text-sm cursor-pointer hover:bg-[var(--bg-tertiary)] px-1 rounded"
-              onClick={handleKeyRename}
-            >
-              {props.entry.key}
-            </span>
-          }>
+
+          <Show
+            when={editingKey()}
+            fallback={
+              <span
+                class="text-yellow-400 font-mono text-sm cursor-pointer hover:bg-[var(--bg-tertiary)] px-1 rounded"
+                onClick={handleKeyRename}
+              >
+                {props.entry.key}
+              </span>
+            }
+          >
             <input
               type="text"
               value={newKey()}
@@ -378,11 +399,11 @@ function TableRow(props: {
             />
           </Show>
         </td>
-        
+
         <td class="py-2 px-3 font-mono text-sm">
           <Show when={props.entry.isGroup}>
             <Show when={props.entry.type === "array"}>
-              <span 
+              <span
                 class="text-[var(--text-muted)] text-sm cursor-pointer hover:text-[var(--accent)]"
                 onClick={handleGroupClick}
               >
@@ -390,11 +411,11 @@ function TableRow(props: {
               </span>
             </Show>
             <Show when={props.entry.type === "object"}>
-              <span 
+              <span
                 class="text-[var(--text-muted)] text-sm cursor-pointer hover:text-[var(--accent)]"
                 onClick={handleGroupClick}
               >
-                {"{" + (getChildCount()) + "}"}
+                {"{" + getChildCount() + "}"}
               </span>
             </Show>
           </Show>
@@ -418,17 +439,21 @@ function TableRow(props: {
                 class={`cursor-pointer hover:bg-[var(--bg-tertiary)] px-1 rounded ${colorClass()}`}
                 onClick={startEdit}
               >
-                <Show when={props.entry.type === "string"}>"{String(props.entry.value)}"</Show>
-                <Show when={props.entry.type !== "string"}>{String(props.entry.value)}</Show>
+                <Show when={props.entry.type === "string"}>
+                  "{String(props.entry.value)}"
+                </Show>
+                <Show when={props.entry.type !== "string"}>
+                  {String(props.entry.value)}
+                </Show>
               </span>
             </Show>
           </Show>
         </td>
-        
+
         <td class="py-2 px-3 text-[var(--text-muted)] text-xs">
           {props.entry.type}
         </td>
-        
+
         <td class="py-2 px-3 text-right">
           <div class="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100">
             <Show when={props.entry.isGroup}>
@@ -442,13 +467,13 @@ function TableRow(props: {
                   +
                 </button>
                 <Show when={showTypeSelector()}>
-                  <TypeSelector 
+                  <TypeSelector
                     onSelect={(type) => {
                       const newValue = getDefaultValue(type);
                       props.onChange(props.entry.path, newValue);
                       setShowTypeSelector(false);
-                    }} 
-                    onClose={() => setShowTypeSelector(false)} 
+                    }}
+                    onClose={() => setShowTypeSelector(false)}
                   />
                 </Show>
               </div>
@@ -476,7 +501,12 @@ function TableRow(props: {
                 </Show>
               </div>
             </Show>
-            <Show when={props.entry.isGroup && (props.entry.type === "object" || props.entry.type === "array")}>
+            <Show
+              when={
+                props.entry.isGroup &&
+                (props.entry.type === "object" || props.entry.type === "array")
+              }
+            >
               <div class="relative">
                 <button
                   type="button"
@@ -498,9 +528,14 @@ function TableRow(props: {
                     <button
                       type="button"
                       onClick={() => {
-                        const clonedValue = JSON.parse(JSON.stringify(props.entry.value));
+                        const clonedValue = JSON.parse(
+                          JSON.stringify(props.entry.value),
+                        );
                         if (props.entry.type === "array") {
-                          const newArray = [...(props.entry.value as JsonArray), clonedValue];
+                          const newArray = [
+                            ...(props.entry.value as JsonArray),
+                            clonedValue,
+                          ];
                           props.onChange(props.entry.path, newArray);
                         } else if (props.entry.type === "object") {
                           let newKeyName = `${props.entry.key}_copy`;
@@ -509,7 +544,10 @@ function TableRow(props: {
                           while (newKeyName in obj) {
                             newKeyName = `${props.entry.key}_copy_${counter++}`;
                           }
-                          const newObj: JsonObject = { ...obj, [newKeyName]: clonedValue };
+                          const newObj: JsonObject = {
+                            ...obj,
+                            [newKeyName]: clonedValue,
+                          };
                           props.onChange(props.entry.path, newObj);
                         }
                         setShowDuplicateMenu(false);
@@ -543,7 +581,7 @@ function TableRow(props: {
           </div>
         </td>
       </tr>
-      
+
       <Show when={props.entry.isGroup && isExpanded() && props.entry.children}>
         <For each={props.entry.children}>
           {(child) => (
@@ -567,26 +605,32 @@ function TableRow(props: {
 
 export default function JsonTableView(props: Props) {
   const [showTypeSelector, setShowTypeSelector] = createSignal(false);
-  const [expandedGroups, setExpandedGroups] = createSignal<Set<string>>(new Set());
+  const [expandedGroups, setExpandedGroups] = createSignal<Set<string>>(
+    new Set(),
+  );
 
   const entries = createMemo(() => buildTableEntries(props.data));
 
-  const updateAtPath = (obj: unknown, path: string[], value: JsonValue): unknown => {
+  const updateAtPath = (
+    obj: unknown,
+    path: string[],
+    value: JsonValue,
+  ): unknown => {
     if (path.length === 0) return value;
-    
+
     const newObj = Array.isArray(obj) ? [...obj] : { ...(obj as JsonObject) };
     const [first, ...rest] = path;
-    
+
     if (rest.length === 0) {
       (newObj as Record<string, unknown>)[first] = value;
     } else {
       (newObj as Record<string, unknown>)[first] = updateAtPath(
         (newObj as Record<string, unknown>)[first],
         rest,
-        value
+        value,
       );
     }
-    
+
     return newObj;
   };
 
@@ -597,11 +641,11 @@ export default function JsonTableView(props: Props) {
 
   const handleDelete = (path: string[]) => {
     if (path.length === 0) return;
-    
+
     const parentPath = path.slice(0, -1);
     const key = path[path.length - 1];
     const parent = getValueAtPath(props.data, parentPath);
-    
+
     if (isArray(parent)) {
       const newArray = [...(parent as JsonArray)];
       const index = parseInt(key);
@@ -618,11 +662,11 @@ export default function JsonTableView(props: Props) {
 
   const handleKeyRename = (path: string[], newKey: string) => {
     if (path.length === 0) return;
-    
+
     const parentPath = path.slice(0, -1);
     const oldKey = path[path.length - 1];
     const parent = getValueAtPath(props.data, parentPath);
-    
+
     if (isObject(parent)) {
       const newObj: JsonObject = {};
       for (const [k, v] of Object.entries(parent)) {
@@ -639,11 +683,11 @@ export default function JsonTableView(props: Props) {
 
   const handleDuplicate = (path: string[], value: JsonValue) => {
     if (path.length === 0) return;
-    
+
     const parentPath = path.slice(0, -1);
     const currentKey = path[path.length - 1];
     const parent = getValueAtPath(props.data, parentPath);
-    
+
     if (isObject(parent)) {
       let newKeyName = `${currentKey}_copy`;
       let counter = 1;
@@ -651,7 +695,10 @@ export default function JsonTableView(props: Props) {
         newKeyName = `${currentKey}_copy_${counter++}`;
       }
       const clonedValue = JSON.parse(JSON.stringify(value));
-      const updatedParent: JsonObject = { ...parent, [newKeyName]: clonedValue };
+      const updatedParent: JsonObject = {
+        ...parent,
+        [newKeyName]: clonedValue,
+      };
       const newData = updateAtPath(props.data, parentPath, updatedParent);
       props.onChange([], newData as JsonValue);
     } else if (isArray(parent)) {
@@ -663,7 +710,7 @@ export default function JsonTableView(props: Props) {
   };
 
   const toggleGroup = (pathKey: string) => {
-    setExpandedGroups(prev => {
+    setExpandedGroups((prev) => {
       const next = new Set(prev);
       if (next.has(pathKey)) {
         next.delete(pathKey);
@@ -676,23 +723,26 @@ export default function JsonTableView(props: Props) {
 
   const handleAddProperty = (jsonType: JsonType) => {
     if (!isObject(props.data)) return;
-    
+
     let newKeyName = "new_field";
     let counter = 1;
-    
+
     while (newKeyName in (props.data as JsonObject)) {
       newKeyName = `new_field_${counter++}`;
     }
-    
+
     const newValue = getDefaultValue(jsonType);
-    const updatedObj: JsonObject = { ...(props.data as JsonObject), [newKeyName]: newValue };
+    const updatedObj: JsonObject = {
+      ...(props.data as JsonObject),
+      [newKeyName]: newValue,
+    };
     props.onChange([], updatedObj as JsonValue);
     setShowTypeSelector(false);
   };
 
   const handleAddArrayItem = (jsonType: JsonType) => {
     if (!isArray(props.data)) return;
-    
+
     const newValue = getDefaultValue(jsonType);
     const updatedArray: JsonArray = [...(props.data as JsonArray), newValue];
     props.onChange([], updatedArray as JsonValue);
@@ -722,7 +772,7 @@ export default function JsonTableView(props: Props) {
   };
 
   const collapseAll = () => {
-    setExpandedGroups(new Set());
+    setExpandedGroups(new Set<string>());
   };
 
   return (
@@ -751,21 +801,29 @@ export default function JsonTableView(props: Props) {
             + {isArray(props.data) ? "Add Item" : "Add Property"}
           </button>
           <Show when={showTypeSelector()}>
-            <TypeSelector 
-              onSelect={handleTypeSelect} 
-              onClose={() => setShowTypeSelector(false)} 
+            <TypeSelector
+              onSelect={handleTypeSelect}
+              onClose={() => setShowTypeSelector(false)}
             />
           </Show>
         </div>
       </div>
-      
+
       <table class="w-full text-left border-collapse">
         <thead class="sticky top-0 bg-[var(--bg-secondary)]">
           <tr class="border-b border-[var(--border-subtle)]">
-            <th class="py-2 px-3 text-[var(--text-secondary)] text-sm font-medium w-1/4">Key</th>
-            <th class="py-2 px-3 text-[var(--text-secondary)] text-sm font-medium">Value</th>
-            <th class="py-2 px-3 text-[var(--text-secondary)] text-sm font-medium w-20">Type</th>
-            <th class="py-2 px-3 text-[var(--text-secondary)] text-sm font-medium w-16 text-right">Actions</th>
+            <th class="py-2 px-3 text-[var(--text-secondary)] text-sm font-medium w-1/4">
+              Key
+            </th>
+            <th class="py-2 px-3 text-[var(--text-secondary)] text-sm font-medium">
+              Value
+            </th>
+            <th class="py-2 px-3 text-[var(--text-secondary)] text-sm font-medium w-20">
+              Type
+            </th>
+            <th class="py-2 px-3 text-[var(--text-secondary)] text-sm font-medium w-16 text-right">
+              Actions
+            </th>
           </tr>
         </thead>
         <tbody>
@@ -786,7 +844,7 @@ export default function JsonTableView(props: Props) {
           </For>
         </tbody>
       </table>
-      
+
       <Show when={entries().length === 0}>
         <p class="text-[var(--text-muted)] text-center py-4">No values</p>
       </Show>

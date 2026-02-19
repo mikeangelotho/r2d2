@@ -1,4 +1,20 @@
 {
-  "organizations": [],
-  "buckets": []
+  "organizations": [
+    {
+      "id": "id_mltv9h3vmxqdwl2",
+      "name": "Edgar",
+      "description": "",
+      "createdAt": "2026-02-19T19:41:08.443Z"
+    }
+  ],
+  "buckets": [
+    {
+      "id": "id_mltvat2asdghg66",
+      "orgId": "id_mltv9h3vmxqdwl2",
+      "name": "refindry",
+      "endpoint": "https://2316fb4a016b50dbae9193a2de9eaa5d.r2.cloudflarestorage.com",
+      "region": "auto",
+      "bucketName": "refindry"
+    }
+  ]
 }

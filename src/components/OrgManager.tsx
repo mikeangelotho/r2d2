@@ -119,7 +119,7 @@ export default function OrgManager(props: Props) {
           bucketName(),
           bucketEndpoint(),
           bucketRegion(),
-          bucketBucketName()
+          bucketBucketName(),
         );
         bucketId = editingBucket()!.id;
       } else {
@@ -128,14 +128,17 @@ export default function OrgManager(props: Props) {
           bucketName(),
           bucketEndpoint(),
           bucketRegion(),
-          bucketBucketName()
+          bucketBucketName(),
         );
         bucketId = newBucket.id;
       }
 
       if (credAccessKeyId() && credSecretAccessKey()) {
         localStorage.setItem(`r2_access_key_id_${bucketId}`, credAccessKeyId());
-        localStorage.setItem(`r2_secret_access_key_${bucketId}`, credSecretAccessKey());
+        localStorage.setItem(
+          `r2_secret_access_key_${bucketId}`,
+          credSecretAccessKey(),
+        );
       }
 
       await loadData();
@@ -161,17 +164,25 @@ export default function OrgManager(props: Props) {
     setBucketEndpoint(bucket.endpoint);
     setBucketRegion(bucket.region);
     setBucketBucketName(bucket.bucketName);
-    setCredAccessKeyId(localStorage.getItem(`r2_access_key_id_${bucket.id}`) || "");
-    setCredSecretAccessKey(localStorage.getItem(`r2_secret_access_key_${bucket.id}`) || "");
+    setCredAccessKeyId(
+      localStorage.getItem(`r2_access_key_id_${bucket.id}`) || "",
+    );
+    setCredSecretAccessKey(
+      localStorage.getItem(`r2_secret_access_key_${bucket.id}`) || "",
+    );
     setShowBucketForm(true);
   };
 
   const connectToBucket = async (bucket: Bucket) => {
-    const accessKeyId = localStorage.getItem(`r2_access_key_id_${bucket.id}`) || "";
-    const secretAccessKey = localStorage.getItem(`r2_secret_access_key_${bucket.id}`) || "";
+    const accessKeyId =
+      localStorage.getItem(`r2_access_key_id_${bucket.id}`) || "";
+    const secretAccessKey =
+      localStorage.getItem(`r2_secret_access_key_${bucket.id}`) || "";
 
     if (!accessKeyId || !secretAccessKey) {
-      alert("Please enter credentials for this bucket in the bucket form first.");
+      alert(
+        "Please enter credentials for this bucket in the bucket form first.",
+      );
       return;
     }
 
@@ -197,19 +208,29 @@ export default function OrgManager(props: Props) {
     }
   };
 
-  const getOrgBuckets = (orgId: string) => buckets().filter((b) => b.orgId === orgId);
+  const getOrgBuckets = (orgId: string) =>
+    buckets().filter((b) => b.orgId === orgId);
 
   return (
     <div class="p-4 max-w-4xl mx-auto">
       <h1 class="text-xl font-semibold mb-4">Organizations & Buckets</h1>
 
-      <Show when={!loading()} fallback={<div class="text-sm text-[var(--text-muted)]">Loading...</div>}>
+      <Show
+        when={!loading()}
+        fallback={
+          <div class="text-sm text-[var(--text-muted)]">Loading...</div>
+        }
+      >
         <div class="space-y-6">
           <div class="card p-3">
             <div class="flex items-center justify-between mb-3">
               <h2 class="text-sm font-medium">Organizations</h2>
               <Show when={!showOrgForm()}>
-                <button type="button" onClick={() => setShowOrgForm(true)} class="btn-primary text-xs py-1">
+                <button
+                  type="button"
+                  onClick={() => setShowOrgForm(true)}
+                  class="btn-primary text-xs py-1"
+                >
                   + Add Org
                 </button>
               </Show>
@@ -234,10 +255,18 @@ export default function OrgManager(props: Props) {
                   />
                 </div>
                 <div class="flex gap-2">
-                  <button type="button" onClick={handleSaveOrg} class="btn-primary text-xs py-1">
+                  <button
+                    type="button"
+                    onClick={handleSaveOrg}
+                    class="btn-primary text-xs py-1"
+                  >
                     {editingOrg() ? "Update" : "Create"}
                   </button>
-                  <button type="button" onClick={resetOrgForm} class="btn-ghost text-xs py-1">
+                  <button
+                    type="button"
+                    onClick={resetOrgForm}
+                    class="btn-ghost text-xs py-1"
+                  >
                     Cancel
                   </button>
                 </div>
@@ -245,7 +274,9 @@ export default function OrgManager(props: Props) {
             </Show>
 
             <Show when={orgs().length === 0 && !showOrgForm()}>
-              <div class="text-sm text-[var(--text-muted)] py-2">No organizations yet</div>
+              <div class="text-sm text-[var(--text-muted)] py-2">
+                No organizations yet
+              </div>
             </Show>
 
             <div class="space-y-2">
@@ -255,7 +286,9 @@ export default function OrgManager(props: Props) {
                     <div class="flex-1">
                       <div class="text-sm font-medium">{org.name}</div>
                       <Show when={org.description}>
-                        <div class="text-xs text-[var(--text-muted)]">{org.description}</div>
+                        <div class="text-xs text-[var(--text-muted)]">
+                          {org.description}
+                        </div>
                       </Show>
                       <div class="text-xs text-[var(--text-muted)] mt-1">
                         {getOrgBuckets(org.id).length} bucket(s)
@@ -264,15 +297,29 @@ export default function OrgManager(props: Props) {
                     <div class="flex gap-1">
                       <button
                         type="button"
-                        onClick={() => setSelectedOrgId(selectedOrgId() === org.id ? null : org.id)}
+                        onClick={() =>
+                          setSelectedOrgId(
+                            selectedOrgId() === org.id ? null : org.id,
+                          )
+                        }
                         class="btn-ghost text-xs py-1 px-2"
                       >
-                        {selectedOrgId() === org.id ? "Hide Buckets" : "Show Buckets"}
+                        {selectedOrgId() === org.id
+                          ? "Hide Buckets"
+                          : "Show Buckets"}
                       </button>
-                      <button type="button" onClick={() => startEditOrg(org)} class="btn-ghost text-xs py-1 px-2">
+                      <button
+                        type="button"
+                        onClick={() => startEditOrg(org)}
+                        class="btn-ghost text-xs py-1 px-2"
+                      >
                         Edit
                       </button>
-                      <button type="button" onClick={() => handleDeleteOrg(org.id)} class="btn-ghost text-xs py-1 px-2 text-[var(--error)]">
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteOrg(org.id)}
+                        class="btn-ghost text-xs py-1 px-2 text-[var(--error)]"
+                      >
                         Delete
                       </button>
                     </div>
@@ -287,7 +334,11 @@ export default function OrgManager(props: Props) {
               <div class="flex items-center justify-between mb-3">
                 <h2 class="text-sm font-medium">Buckets</h2>
                 <Show when={!showBucketForm()}>
-                  <button type="button" onClick={() => setShowBucketForm(true)} class="btn-primary text-xs py-1">
+                  <button
+                    type="button"
+                    onClick={() => setShowBucketForm(true)}
+                    class="btn-primary text-xs py-1"
+                  >
                     + Add Bucket
                   </button>
                 </Show>
@@ -320,43 +371,66 @@ export default function OrgManager(props: Props) {
                     <input
                       type="text"
                       value={bucketBucketName()}
-                      onInput={(e) => setBucketBucketName(e.currentTarget.value)}
+                      onInput={(e) =>
+                        setBucketBucketName(e.currentTarget.value)
+                      }
                       placeholder="Bucket name (S3)"
                       class="input text-xs"
                     />
                   </div>
                   <div class="mb-2 p-2 bg-[var(--bg-secondary)] rounded text-xs text-[var(--text-muted)]">
-                    <div class="font-medium mb-1">Credentials (stored in browser)</div>
+                    <div class="font-medium mb-1">
+                      Credentials (stored in browser)
+                    </div>
                     <div class="grid grid-cols-2 gap-2">
                       <input
                         type="text"
                         placeholder="Access Key ID"
                         class="input text-xs"
                         value={credAccessKeyId()}
-                        onInput={(e) => setCredAccessKeyId(e.currentTarget.value)}
+                        onInput={(e) =>
+                          setCredAccessKeyId(e.currentTarget.value)
+                        }
                       />
                       <input
                         type="password"
                         placeholder="Secret Access Key"
                         class="input text-xs"
                         value={credSecretAccessKey()}
-                        onInput={(e) => setCredSecretAccessKey(e.currentTarget.value)}
+                        onInput={(e) =>
+                          setCredSecretAccessKey(e.currentTarget.value)
+                        }
                       />
                     </div>
                   </div>
                   <div class="flex gap-2">
-                    <button type="button" onClick={handleSaveBucket} class="btn-primary text-xs py-1">
+                    <button
+                      type="button"
+                      onClick={handleSaveBucket}
+                      class="btn-primary text-xs py-1"
+                    >
                       {editingBucket() ? "Update" : "Create"}
                     </button>
-                    <button type="button" onClick={resetBucketForm} class="btn-ghost text-xs py-1">
+                    <button
+                      type="button"
+                      onClick={resetBucketForm}
+                      class="btn-ghost text-xs py-1"
+                    >
                       Cancel
                     </button>
                   </div>
                 </div>
               </Show>
 
-              <Show when={getOrgBuckets(selectedOrgId()!).length === 0 && !showBucketForm()}>
-                <div class="text-sm text-[var(--text-muted)] py-2">No buckets yet</div>
+              <Show
+                when={
+                  getOrgBuckets(selectedOrgId()!).length === 0 &&
+                  !showBucketForm()
+                }
+              >
+                <div class="text-sm text-[var(--text-muted)] py-2">
+                  No buckets yet
+                </div>
               </Show>
 
               <div class="space-y-2">
@@ -365,8 +439,12 @@ export default function OrgManager(props: Props) {
                     <div class="flex items-center justify-between p-2 rounded bg-[var(--bg-tertiary)]">
                       <div class="flex-1">
                         <div class="text-sm font-medium">{bucket.name}</div>
-                        <div class="text-xs text-[var(--text-muted)]">{bucket.bucketName}</div>
-                        <div class="text-xs text-[var(--text-muted)]">{bucket.endpoint}</div>
+                        <div class="text-xs text-[var(--text-muted)]">
+                          {bucket.bucketName}
+                        </div>
+                        <div class="text-xs text-[var(--text-muted)]">
+                          {bucket.endpoint}
+                        </div>
                       </div>
                       <div class="flex gap-1">
                         <button

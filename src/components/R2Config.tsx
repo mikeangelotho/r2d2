@@ -22,7 +22,7 @@ export default function R2Config(props: Props) {
       setAccessKeyId(localStorage.getItem("r2_access_key_id") || "");
       setSecretAccessKey(localStorage.getItem("r2_secret_access_key") || "");
       setBucketName(localStorage.getItem("r2_bucket_name") || "");
-      
+
       try {
         const configured = await serverIsConfigured();
         setIsConnected(configured);
@@ -38,7 +38,7 @@ export default function R2Config(props: Props) {
   const handleConnect = async () => {
     setError("");
     setLoading(true);
-    
+
     try {
       const config: R2Config = {
         endpoint: endpoint(),
@@ -50,14 +50,14 @@ export default function R2Config(props: Props) {
       await serverInitR2(config);
       setIsConnected(true);
       setShowConfig(false);
-      
+
       if (typeof window !== "undefined") {
         localStorage.setItem("r2_endpoint", endpoint());
         localStorage.setItem("r2_access_key_id", accessKeyId());
         localStorage.setItem("r2_secret_access_key", secretAccessKey());
         localStorage.setItem("r2_bucket_name", bucketName());
       }
-      
+
       props.onConnected();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Connection failed");
@@ -72,7 +72,9 @@ export default function R2Config(props: Props) {
         <div class="flex items-center justify-between card px-2 py-1.5">
           <div class="flex items-center gap-2">
             <span class="status-dot status-dot-success"></span>
-            <span class="text-sm text-[var(--text-secondary)]">{bucketName()}</span>
+            <span class="text-sm text-[var(--text-secondary)]">
+              {bucketName()}
+            </span>
           </div>
           <button
             type="button"
@@ -98,7 +100,7 @@ export default function R2Config(props: Props) {
               </button>
             </div>
           </Show>
-          
+
           <div class="grid grid-cols-2 gap-2">
             <input
               type="text"
@@ -129,16 +131,22 @@ export default function R2Config(props: Props) {
               class="input text-xs col-span-2"
             />
           </div>
-          
+
           <Show when={error()}>
             <div class="mt-2 text-xs text-[var(--error)]">{error()}</div>
           </Show>
-          
+
           <div class="mt-2 flex justify-end">
             <button
               type="button"
               onClick={handleConnect}
-              disabled={loading() || !endpoint() || !accessKeyId() || !secretAccessKey() || !bucketName()}
+              disabled={
+                loading() ||
+                !endpoint() ||
+                !accessKeyId() ||
+                !secretAccessKey() ||
+                !bucketName()
+              }
               class="btn-primary text-xs py-1"
             >
               {loading() ? "Connecting..." : "Connect"}

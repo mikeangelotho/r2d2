@@ -36,7 +36,9 @@ function getValueAtPath(obj: unknown, path: string[]): unknown {
 export default function NestedViewModal(props: Props) {
   const [viewMode, setViewMode] = createSignal<"tree" | "table">("tree");
   const [currentPath, setCurrentPath] = createSignal<string[]>(props.basePath);
-  const [localData, setLocalData] = createSignal<unknown>(getValueAtPath(props.data, props.basePath));
+  const [localData, setLocalData] = createSignal<unknown>(
+    getValueAtPath(props.data, props.basePath),
+  );
 
   const currentData = createMemo(() => {
     return getValueAtPath(props.data, currentPath());
@@ -45,14 +47,14 @@ export default function NestedViewModal(props: Props) {
   const breadcrumbs = createMemo((): BreadcrumbItem[] => {
     const items: BreadcrumbItem[] = [{ key: "root", path: [] }];
     let path: string[] = [];
-    
+
     for (let i = 0; i < props.basePath.length; i++) {
       path = [...path, props.basePath[i]];
       const key = props.basePath[i];
       const displayKey = isNaN(Number(key)) ? key : `[${key}]`;
       items.push({ key: displayKey, path });
     }
-    
+
     return items;
   });
 
@@ -74,7 +76,11 @@ export default function NestedViewModal(props: Props) {
   };
 
   const isExpandable = (val: unknown): boolean => {
-    return val !== null && typeof val === "object" && (Array.isArray(val) || Object.keys(val).length > 0);
+    return (
+      val !== null &&
+      typeof val === "object" &&
+      (Array.isArray(val) || Object.keys(val).length > 0)
+    );
   };
 
   const handleTreeNodeClick = (path: string[], value: unknown) => {
@@ -149,15 +155,15 @@ export default function NestedViewModal(props: Props) {
 
         <div class="flex-1 overflow-auto p-4">
           <Show when={viewMode() === "tree"}>
-            <JsonTreeView 
-              data={currentData()!} 
+            <JsonTreeView
+              data={currentData()!}
               onChange={handleChange}
               onNodeClick={handleTreeNodeClick}
             />
           </Show>
           <Show when={viewMode() === "table"}>
-            <JsonTableView 
-              data={currentData()!} 
+            <JsonTableView
+              data={currentData()!}
               onChange={handleChange}
               onNodeClick={handleTreeNodeClick}
             />

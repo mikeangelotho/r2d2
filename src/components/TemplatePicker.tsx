@@ -1,5 +1,9 @@
 import { createSignal, For, Show, createMemo } from "solid-js";
-import { serverGetJsonFile, serverListJsonFiles, serverPutJsonFile } from "~/lib/r2-server";
+import {
+  serverGetJsonFile,
+  serverListJsonFiles,
+  serverPutJsonFile,
+} from "~/lib/r2-server";
 import type { R2File } from "~/lib/r2";
 
 type JsonValue = string | number | boolean | null | JsonObject | JsonArray;
@@ -44,14 +48,20 @@ function isArray(val: unknown): val is JsonArray {
 export default function TemplatePicker(props: Props) {
   const [files, setFiles] = createSignal<R2File[]>([]);
   const [loading, setLoading] = createSignal(true);
-  const [selectedSources, setSelectedSources] = createSignal<Map<string, JsonObject>>(new Map());
+  const [selectedSources, setSelectedSources] = createSignal<
+    Map<string, JsonObject>
+  >(new Map());
   const [selectedFields, setSelectedFields] = createSignal<SelectedField[]>([]);
   const [activeSource, setActiveSource] = createSignal<string | null>(null);
   const [activePath, setActivePath] = createSignal<string[]>([]);
   const [mode, setMode] = createSignal<"create" | "add">("create");
   const [newFileName, setNewFileName] = createSignal("");
-  const [targetFile, setTargetFile] = createSignal<string | null>(props.existingFile || null);
-  const [targetData, setTargetData] = createSignal<JsonObject | JsonArray | null>(props.existingData || null);
+  const [targetFile, setTargetFile] = createSignal<string | null>(
+    props.existingFile || null,
+  );
+  const [targetData, setTargetData] = createSignal<
+    JsonObject | JsonArray | null
+  >(props.existingData || null);
   const [creating, setCreating] = createSignal(false);
   const [error, setError] = createSignal("");
 
@@ -74,11 +84,13 @@ export default function TemplatePicker(props: Props) {
       setActivePath([]);
       return;
     }
-    
+
     try {
       const data = await serverGetJsonFile(key);
       if (typeof data === "object" && data !== null && !Array.isArray(data)) {
-        setSelectedSources(prev => new Map(prev).set(key, data as JsonObject));
+        setSelectedSources((prev) =>
+          new Map(prev).set(key, data as JsonObject),
+        );
         setActiveSource(key);
         setActivePath([]);
       } else {
@@ -91,7 +103,7 @@ export default function TemplatePicker(props: Props) {
 
   const handleTargetSelect = async (key: string) => {
     if (targetFile() === key) return;
-    
+
     try {
       const data = await serverGetJsonFile(key);
       if (typeof data === "object" && data !== null) {
@@ -106,14 +118,16 @@ export default function TemplatePicker(props: Props) {
   };
 
   const handleRemoveSource = (key: string) => {
-    setSelectedSources(prev => {
+    setSelectedSources((prev) => {
       const next = new Map(prev);
       next.delete(key);
       return next;
     });
-    setSelectedFields(prev => prev.filter(f => f.sourceFile !== key));
+    setSelectedFields((prev) => prev.filter((f) => f.sourceFile !== key));
     if (activeSource() === key) {
-      const remaining = Array.from(selectedSources().keys()).filter(k => k !== key);
+      const remaining = Array.from(selectedSources().keys()).filter(
+        (k) => k !== key,
+      );
       setActiveSource(remaining[0] || null);
       setActivePath([]);
     }
@@ -134,29 +148,31 @@ export default function TemplatePicker(props: Props) {
       return Object.entries(data).map(([k, v]) => ({
         key: k,
         value: v,
-        isExpandable: (v !== null && typeof v === "object")
+        isExpandable: v !== null && typeof v === "object",
       }));
     }
     if (isArray(data)) {
       return data.map((v, i) => ({
         key: String(i),
         value: v,
-        isExpandable: (v !== null && typeof v === "object")
+        isExpandable: v !== null && typeof v === "object",
       }));
     }
     return [];
   });
 
   const handleDrillDown = (key: string) => {
-    setActivePath(prev => [...prev, key]);
+    setActivePath((prev) => [...prev, key]);
   };
 
   const handleBreadcrumbClick = (index: number) => {
-    setActivePath(prev => prev.slice(0, index));
+    setActivePath((prev) => prev.slice(0, index));
   };
 
   const breadcrumbs = createMemo(() => {
-    const items: { key: string; path: string[] }[] = [{ key: "root", path: [] }];
+    const items: { key: string; path: string[] }[] = [
+      { key: "root", path: [] },
+    ];
     let path: string[] = [];
     for (const segment of activePath()) {
       path = [...path, segment];
@@ -167,51 +183,64 @@ export default function TemplatePicker(props: Props) {
   });
 
   const handleToggleField = (key: string, value: JsonValue) => {
-    const isSelected = selectedFields().some(f => 
-      f.sourceFile === activeSource() && 
-      f.originalPath.length === activePath().length + 1 &&
-      f.originalPath[activePath().length] === key
+    const isSelected = selectedFields().some(
+      (f) =>
+        f.sourceFile === activeSource() &&
+        f.originalPath.length === activePath().length + 1 &&
+        f.originalPath[activePath().length] === key,
     );
 
     if (isSelected) {
-      setSelectedFields(prev => prev.filter(f => 
-        !(f.sourceFile === activeSource() && 
-          f.originalPath.length === activePath().length + 1 &&
-          f.originalPath[activePath().length] === key)
-      ));
+      setSelectedFields((prev) =>
+        prev.filter(
+          (f) =>
+            !(
+              f.sourceFile === activeSource() &&
+              f.originalPath.length === activePath().length + 1 &&
+              f.originalPath[activePath().length] === key
+            ),
+        ),
+      );
     } else {
       const fullPath = [...activePath(), key];
       const selectedKey = key;
-      setSelectedFields(prev => [...prev, {
-        sourceFile: activeSource()!,
-        originalPath: fullPath,
-        selectedKey,
-        value
-      }]);
+      setSelectedFields((prev) => [
+        ...prev,
+        {
+          sourceFile: activeSource()!,
+          originalPath: fullPath,
+          selectedKey,
+          value,
+        },
+      ]);
     }
   };
 
   const handleRenameField = (originalPath: string[], newName: string) => {
-    setSelectedFields(prev => prev.map(f => 
-      JSON.stringify(f.originalPath) === JSON.stringify(originalPath)
-        ? { ...f, selectedKey: newName }
-        : f
-    ));
+    setSelectedFields((prev) =>
+      prev.map((f) =>
+        JSON.stringify(f.originalPath) === JSON.stringify(originalPath)
+          ? { ...f, selectedKey: newName }
+          : f,
+      ),
+    );
   };
 
   const isFieldSelected = (key: string) => {
-    return selectedFields().some(f => 
-      f.sourceFile === activeSource() && 
-      f.originalPath.length === activePath().length + 1 &&
-      f.originalPath[activePath().length] === key
+    return selectedFields().some(
+      (f) =>
+        f.sourceFile === activeSource() &&
+        f.originalPath.length === activePath().length + 1 &&
+        f.originalPath[activePath().length] === key,
     );
   };
 
   const getSelectedField = (key: string) => {
-    return selectedFields().find(f => 
-      f.sourceFile === activeSource() && 
-      f.originalPath.length === activePath().length + 1 &&
-      f.originalPath[activePath().length] === key
+    return selectedFields().find(
+      (f) =>
+        f.sourceFile === activeSource() &&
+        f.originalPath.length === activePath().length + 1 &&
+        f.originalPath[activePath().length] === key,
     );
   };
 
@@ -243,7 +272,11 @@ export default function TemplatePicker(props: Props) {
       }
       const conflicts = checkForConflicts();
       if (conflicts.length > 0) {
-        if (!confirm(`The following fields already exist and will be overwritten: ${conflicts.join(", ")}. Continue?`)) {
+        if (
+          !confirm(
+            `The following fields already exist and will be overwritten: ${conflicts.join(", ")}. Continue?`,
+          )
+        ) {
           return;
         }
       }
@@ -259,7 +292,7 @@ export default function TemplatePicker(props: Props) {
 
     try {
       let dataToSave: JsonValue;
-      
+
       if (mode() === "create") {
         dataToSave = {};
         for (const field of selectedFields()) {
@@ -273,13 +306,13 @@ export default function TemplatePicker(props: Props) {
           }
           dataToSave = [...(targetData() as JsonArray), newEntry];
         } else {
-          dataToSave = { ...targetData() as JsonObject };
+          dataToSave = { ...(targetData() as JsonObject) };
           for (const field of selectedFields()) {
             (dataToSave as JsonObject)[field.selectedKey] = field.value;
           }
         }
       }
-      
+
       const saveKey = mode() === "create" ? newFileName() : targetFile()!;
       await serverPutJsonFile(saveKey, dataToSave);
       props.onCreated(saveKey);
@@ -291,13 +324,15 @@ export default function TemplatePicker(props: Props) {
   };
 
   const availableTargetFiles = createMemo(() => {
-    return files().filter(f => f.key !== targetFile());
+    return files().filter((f) => f.key !== targetFile());
   });
 
   const getValuePreview = (value: JsonValue): string => {
     if (value === null) return "null";
-    if (typeof value === "string") return `"${value.slice(0, 30)}${value.length > 30 ? "..." : ""}"`;
-    if (typeof value === "number" || typeof value === "boolean") return String(value);
+    if (typeof value === "string")
+      return `"${value.slice(0, 30)}${value.length > 30 ? "..." : ""}"`;
+    if (typeof value === "number" || typeof value === "boolean")
+      return String(value);
     if (isArray(value)) return `Array[${value.length}]`;
     if (isObject(value)) return `Object{${Object.keys(value).length}}`;
     return String(value);
@@ -309,7 +344,9 @@ export default function TemplatePicker(props: Props) {
         <div class="flex items-center justify-between px-5 py-3 border-b border-[var(--border-subtle)]">
           <div class="flex items-center gap-4">
             <h2 class="text-base font-medium text-[var(--text-primary)]">
-              {mode() === "create" ? "Create from Template" : "Add from Template"}
+              {mode() === "create"
+                ? "Create from Template"
+                : "Add from Template"}
             </h2>
             <div class="flex items-center gap-1">
               <button
@@ -364,7 +401,9 @@ export default function TemplatePicker(props: Props) {
                   <div class="flex items-center justify-between">
                     <span class="text-xs text-[var(--accent)]">TARGET:</span>
                     <span class="text-xs text-[var(--text-muted)]">
-                      {isArray(targetData()) ? `Array[${(targetData() as JsonArray).length} entries]` : "Object"}
+                      {isArray(targetData())
+                        ? `Array[${(targetData() as JsonArray).length} entries]`
+                        : "Object"}
                     </span>
                   </div>
                   <div class="flex items-center justify-between mt-1">
@@ -384,12 +423,16 @@ export default function TemplatePicker(props: Props) {
                   </div>
                   <Show when={isObject(targetData())}>
                     <div class="mt-2 pt-2 border-t border-[var(--border-subtle)]">
-                      <span class="text-xs text-[var(--text-muted)]">EXISTING FIELDS:</span>
+                      <span class="text-xs text-[var(--text-muted)]">
+                        EXISTING FIELDS:
+                      </span>
                       <div class="mt-1 space-y-1 max-h-24 overflow-y-auto">
                         <For each={Object.keys(targetData() as JsonObject)}>
                           {(key) => (
                             <div class="flex items-center gap-2">
-                              <span class="text-xs text-green-400">"{key}"</span>
+                              <span class="text-xs text-green-400">
+                                "{key}"
+                              </span>
                             </div>
                           )}
                         </For>
@@ -405,18 +448,20 @@ export default function TemplatePicker(props: Props) {
                   </Show>
                 </div>
               </Show>
-              
+
               <Show when={loading()}>
                 <div class="px-4 py-4 text-center">
-                  <span class="text-xs text-[var(--text-muted)]">Loading...</span>
+                  <span class="text-xs text-[var(--text-muted)]">
+                    Loading...
+                  </span>
                 </div>
               </Show>
-              
+
               <For each={files()}>
                 {(file) => {
                   const isSource = selectedSources().has(file.key);
                   const isTarget = targetFile() === file.key;
-                  
+
                   return (
                     <button
                       type="button"
@@ -438,13 +483,17 @@ export default function TemplatePicker(props: Props) {
                           <span class="text-xs text-[var(--accent)]">T</span>
                         </Show>
                         <Show when={!isSource && !isTarget}>
-                          <span class="text-xs text-[var(--text-muted)]">+</span>
+                          <span class="text-xs text-[var(--text-muted)]">
+                            +
+                          </span>
                         </Show>
-                        <span class={`text-xs truncate ${
-                          isSource || isTarget 
-                            ? "text-[var(--accent)]" 
-                            : "text-[var(--text-primary)]"
-                        }`}>
+                        <span
+                          class={`text-xs truncate ${
+                            isSource || isTarget
+                              ? "text-[var(--accent)]"
+                              : "text-[var(--text-primary)]"
+                          }`}
+                        >
                           {file.key.split("/").pop()}
                         </span>
                         <Show when={mode() === "add" && isSource && !isTarget}>
@@ -469,11 +518,16 @@ export default function TemplatePicker(props: Props) {
           </div>
 
           <div class="flex-1 flex flex-col overflow-hidden">
-            <Show when={selectedSources().size > 0} fallback={
-              <div class="flex-1 flex items-center justify-center">
-                <span class="text-sm text-[var(--text-muted)]">Select a source file to pick fields</span>
-              </div>
-            }>
+            <Show
+              when={selectedSources().size > 0}
+              fallback={
+                <div class="flex-1 flex items-center justify-center">
+                  <span class="text-sm text-[var(--text-muted)]">
+                    Select a source file to pick fields
+                  </span>
+                </div>
+              }
+            >
               <div class="flex items-center border-b border-[var(--border-subtle)] overflow-x-auto">
                 <For each={Array.from(selectedSources().keys())}>
                   {(key) => (
@@ -489,8 +543,10 @@ export default function TemplatePicker(props: Props) {
                           : "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)]"
                       }`}
                     >
-                      <span class="truncate max-w-28">{key.split("/").pop()}</span>
-                      <span 
+                      <span class="truncate max-w-28">
+                        {key.split("/").pop()}
+                      </span>
+                      <span
                         class="text-[var(--text-muted)] hover:text-[var(--error)]"
                         onClick={(e) => {
                           e.stopPropagation();
@@ -533,31 +589,47 @@ export default function TemplatePicker(props: Props) {
                   <div class="space-y-1">
                     <div class="flex items-center justify-between mb-3">
                       <span class="text-xs text-[var(--text-muted)]">
-                        {activePath().length === 0 ? "TOP-LEVEL FIELDS" : `FIELDS IN "${activePath()[activePath().length - 1]}"`}
+                        {activePath().length === 0
+                          ? "TOP-LEVEL FIELDS"
+                          : `FIELDS IN "${activePath()[activePath().length - 1]}"`}
                       </span>
                       <span class="text-xs text-[var(--text-muted)]">
-                        {selectedFields().filter(f => f.sourceFile === activeSource()).length} selected
+                        {
+                          selectedFields().filter(
+                            (f) => f.sourceFile === activeSource(),
+                          ).length
+                        }{" "}
+                        selected
                       </span>
                     </div>
                     <For each={activeSourceEntries()}>
                       {(entry) => {
                         const isSelected = () => isFieldSelected(entry.key);
-                        const hasConflict = () => targetData() && isObject(targetData()) && entry.key in (targetData() as JsonObject);
+                        const hasConflict = () =>
+                          targetData() &&
+                          isObject(targetData()) &&
+                          entry.key in (targetData() as JsonObject);
                         const selectedField = () => getSelectedField(entry.key);
-                        
+
                         return (
-                          <div class={`flex items-center gap-3 p-2 rounded border transition-colors ${
-                            isSelected() 
-                                ? "bg-[var(--accent-subtle)] border-[var(--accent)]" 
+                          <div
+                            class={`flex items-center gap-3 p-2 rounded border transition-colors ${
+                              isSelected()
+                                ? "bg-[var(--accent-subtle)] border-[var(--accent)]"
                                 : "hover:bg-[var(--bg-tertiary)] border-transparent hover:border-[var(--border-subtle)]"
-                          }`}>
+                            }`}
+                          >
                             <input
                               type="checkbox"
                               checked={isSelected()}
-                              onChange={() => handleToggleField(entry.key, entry.value)}
+                              onChange={() =>
+                                handleToggleField(entry.key, entry.value)
+                              }
                               class="w-4 h-4 accent-[var(--accent)]"
                             />
-                            <span class={`text-sm min-w-[120px] ${hasConflict() ? "text-[var(--warning)]" : "text-yellow-400"}`}>
+                            <span
+                              class={`text-sm min-w-[120px] ${hasConflict() ? "text-[var(--warning)]" : "text-yellow-400"}`}
+                            >
                               {entry.key}
                             </span>
                             <span class="text-xs text-[var(--text-muted)] min-w-[100px]">
@@ -576,7 +648,12 @@ export default function TemplatePicker(props: Props) {
                               <input
                                 type="text"
                                 value={selectedField()?.selectedKey || ""}
-                                onInput={(e) => handleRenameField([...activePath(), entry.key], e.currentTarget.value)}
+                                onInput={(e) =>
+                                  handleRenameField(
+                                    [...activePath(), entry.key],
+                                    e.currentTarget.value,
+                                  )
+                                }
                                 class="text-sm bg-[var(--bg-tertiary)] border border-[var(--border-subtle)] rounded px-2 py-1 flex-1 max-w-[200px] text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent)]"
                                 placeholder="Rename"
                               />
@@ -587,7 +664,9 @@ export default function TemplatePicker(props: Props) {
                     </For>
                     <Show when={activeSourceEntries().length === 0}>
                       <p class="text-xs text-[var(--text-muted)] text-center py-4">
-                        {isArray(activeSourceData()) ? "Empty array" : "No fields available"}
+                        {isArray(activeSourceData())
+                          ? "Empty array"
+                          : "No fields available"}
                       </p>
                     </Show>
                   </div>
@@ -612,7 +691,7 @@ export default function TemplatePicker(props: Props) {
               </Show>
               <Show when={mode() === "add"}>
                 <span class="text-xs text-[var(--text-muted)]">
-                  {targetData() 
+                  {targetData()
                     ? isArray(targetData())
                       ? `Will append new entry with ${selectedFields().length} field${selectedFields().length !== 1 ? "s" : ""} to ${targetFile()?.split("/").pop()}`
                       : `Will add ${selectedFields().length} field${selectedFields().length !== 1 ? "s" : ""} to ${targetFile()?.split("/").pop()}`
@@ -631,10 +710,18 @@ export default function TemplatePicker(props: Props) {
               <button
                 type="button"
                 onClick={handleCreate}
-                disabled={creating() || selectedFields().length === 0 || (mode() === "add" && !targetFile())}
+                disabled={
+                  creating() ||
+                  selectedFields().length === 0 ||
+                  (mode() === "add" && !targetFile())
+                }
                 class="btn-primary text-xs"
               >
-                {creating() ? "Saving..." : mode() === "create" ? "Create" : "Add Fields"}
+                {creating()
+                  ? "Saving..."
+                  : mode() === "create"
+                    ? "Create"
+                    : "Add Fields"}
               </button>
             </div>
           </div>

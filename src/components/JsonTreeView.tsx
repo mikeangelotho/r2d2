@@ -43,12 +43,18 @@ function getType(val: JsonValue): string {
 
 function getDefaultValue(type: JsonType): JsonValue {
   switch (type) {
-    case "string": return "";
-    case "number": return 0;
-    case "boolean": return false;
-    case "null": return null;
-    case "object": return {};
-    case "array": return [];
+    case "string":
+      return "";
+    case "number":
+      return 0;
+    case "boolean":
+      return false;
+    case "null":
+      return null;
+    case "object":
+      return {};
+    case "array":
+      return [];
   }
 }
 
@@ -59,15 +65,29 @@ function TypeIcon(props: { type: string }) {
     boolean: "M8 9l4-4 4 4m0 6l-4 4-4-4",
     null: "M18 12H6m12 0a12 12 0 100-24 12 12 0 000 24z",
   };
-  
+
   return (
-    <svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d={icons[props.type] || icons.string} />
+    <svg
+      class="w-2.5 h-2.5"
+      fill="none"
+      stroke="currentColor"
+      viewBox="0 0 24 24"
+    >
+      <path
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="2"
+        d={icons[props.type] || icons.string}
+      />
     </svg>
   );
 }
- 
-function ValueEditor(props: { value: JsonValue; path: string[]; onChange: (path: string[], value: JsonValue) => void }) {
+
+function ValueEditor(props: {
+  value: JsonValue;
+  path: string[];
+  onChange: (path: string[], value: JsonValue) => void;
+}) {
   const [editing, setEditing] = createSignal(false);
   const [editValue, setEditValue] = createSignal("");
 
@@ -79,7 +99,7 @@ function ValueEditor(props: { value: JsonValue; path: string[]; onChange: (path:
 
   const saveEdit = () => {
     let newValue: JsonValue = editValue();
-    
+
     if (editValue() === "null") {
       newValue = null;
     } else if (editValue() === "true") {
@@ -89,7 +109,7 @@ function ValueEditor(props: { value: JsonValue; path: string[]; onChange: (path:
     } else if (!isNaN(Number(editValue()))) {
       newValue = Number(editValue());
     }
-    
+
     props.onChange(props.path, newValue);
     setEditing(false);
   };
@@ -113,12 +133,8 @@ function ValueEditor(props: { value: JsonValue; path: string[]; onChange: (path:
             class="cursor-pointer hover:bg-[var(--bg-tertiary)] px-1.5 py-0.5 rounded text-sm font-mono"
             onClick={startEdit}
           >
-            <Show when={type() === "string"}>
-              "{String(props.value)}"
-            </Show>
-            <Show when={type() !== "string"}>
-              {String(props.value)}
-            </Show>
+            <Show when={type() === "string"}>"{String(props.value)}"</Show>
+            <Show when={type() !== "string"}>{String(props.value)}</Show>
           </span>
         </div>
       }
@@ -139,9 +155,19 @@ function ValueEditor(props: { value: JsonValue; path: string[]; onChange: (path:
   );
 }
 
-function TypeSelector(props: { onSelect: (type: JsonType) => void; onClose: () => void }) {
-  const types: JsonType[] = ["string", "number", "boolean", "null", "object", "array"];
-  
+function TypeSelector(props: {
+  onSelect: (type: JsonType) => void;
+  onClose: () => void;
+}) {
+  const types: JsonType[] = [
+    "string",
+    "number",
+    "boolean",
+    "null",
+    "object",
+    "array",
+  ];
+
   return (
     <div class="absolute z-20 bg-[var(--bg-elevated)] border border-[var(--border-subtle)] rounded shadow-lg py-1 min-w-[120px]">
       <For each={types}>
@@ -168,16 +194,24 @@ function TypeSelector(props: { onSelect: (type: JsonType) => void; onClose: () =
   );
 }
 
-function TreeNode(props: { keyName: string; value: JsonValue; path: string[]; onChange: (path: string[], value: JsonValue) => void; onNodeClick?: (path: string[], value: JsonValue) => void; onDuplicate?: (path: string[], value: JsonValue) => void; isLast: boolean }) {
+function TreeNode(props: {
+  keyName: string;
+  value: JsonValue;
+  path: string[];
+  onChange: (path: string[], value: JsonValue) => void;
+  onNodeClick?: (path: string[], value: JsonValue) => void;
+  onDuplicate?: (path: string[], value: JsonValue) => void;
+  isLast: boolean;
+}) {
   const [collapsed, setCollapsed] = createSignal(false);
   const [showTypeSelector, setShowTypeSelector] = createSignal(false);
   const [showDuplicateMenu, setShowDuplicateMenu] = createSignal(false);
   const [editingKey, setEditingKey] = createSignal(false);
   const [newKey, setNewKey] = createSignal("");
-  
+
   const type = () => getType(props.value);
   const isExpandable = () => type() === "object" || type() === "array";
-  
+
   const handleDelete = () => {
     const newValue: JsonValue = null;
     props.onChange(props.path, newValue);
@@ -198,11 +232,11 @@ function TreeNode(props: { keyName: string; value: JsonValue; path: string[]; on
     const currentObj = props.value as JsonObject;
     let newKeyName = "new_field";
     let counter = 1;
-    
+
     while (newKeyName in currentObj) {
       newKeyName = `new_field_${counter++}`;
     }
-    
+
     const newValue = getDefaultValue(jsonType);
     const updatedObj: JsonObject = { ...currentObj, [newKeyName]: newValue };
     props.onChange(props.path, updatedObj);
@@ -241,7 +275,10 @@ function TreeNode(props: { keyName: string; value: JsonValue; path: string[]; on
         newKeyName = `${props.keyName}_copy_${counter++}`;
       }
       const clonedValue = JSON.parse(JSON.stringify(props.value));
-      const updatedObj: JsonObject = { ...currentObj, [newKeyName]: clonedValue };
+      const updatedObj: JsonObject = {
+        ...currentObj,
+        [newKeyName]: clonedValue,
+      };
       props.onChange(props.path, updatedObj);
     } else if (type() === "array") {
       const currentArray = props.value as JsonArray;
@@ -267,27 +304,35 @@ function TreeNode(props: { keyName: string; value: JsonValue; path: string[]; on
         <Show when={!isExpandable()}>
           <span class="w-4 mr-1" />
         </Show>
-        
+
         <span class="text-yellow-400 mr-1">"{props.keyName}"</span>
         <span class="text-[var(--text-muted)] mr-1">:</span>
-        
+
         <Show when={type() === "object" || type() === "array"}>
-          <span 
+          <span
             class={`type-badge type-${type()} cursor-pointer hover:opacity-80`}
             onClick={handleNodeClick}
           >
             {collapsed() ? (
-              <span>{type() === "array" ? `[${(props.value as JsonArray).length}]` : `{${Object.keys(props.value as JsonObject).length}}`}</span>
+              <span>
+                {type() === "array"
+                  ? `[${(props.value as JsonArray).length}]`
+                  : `{${Object.keys(props.value as JsonObject).length}}`}
+              </span>
             ) : (
               <span>{type()}</span>
             )}
           </span>
         </Show>
-        
+
         <Show when={type() !== "object" && type() !== "array"}>
-          <ValueEditor value={props.value} path={props.path} onChange={props.onChange} />
+          <ValueEditor
+            value={props.value}
+            path={props.path}
+            onChange={props.onChange}
+          />
         </Show>
-        
+
         <button
           type="button"
           onClick={handleDelete}
@@ -324,12 +369,12 @@ function TreeNode(props: { keyName: string; value: JsonValue; path: string[]; on
           </Show>
         </div>
       </div>
-      
+
       <Show when={isExpandable() && !collapsed()}>
         <div class="border-l border-[var(--border-subtle)] ml-2">
           <Show when={type() === "object"}>
             <For each={Object.entries(props.value as JsonObject)}>
-                {([key, val]: [string, JsonValue]) => (
+              {([key, val]: [string, JsonValue]) => (
                 <TreeNode
                   keyName={key}
                   value={val}
@@ -337,9 +382,12 @@ function TreeNode(props: { keyName: string; value: JsonValue; path: string[]; on
                   onChange={props.onChange}
                   onNodeClick={props.onNodeClick}
                   onDuplicate={props.onDuplicate}
-                  isLast={Object.keys(props.value as JsonObject).indexOf(key) === Object.keys(props.value as JsonObject).length - 1}
+                  isLast={
+                    Object.keys(props.value as JsonObject).indexOf(key) ===
+                    Object.keys(props.value as JsonObject).length - 1
+                  }
                 />
-                )}
+              )}
             </For>
           </Show>
           <Show when={type() === "array"}>
@@ -357,7 +405,7 @@ function TreeNode(props: { keyName: string; value: JsonValue; path: string[]; on
               )}
             </For>
           </Show>
-          
+
           <div class="mt-1 pt-1 border-t border-[var(--border-subtle)]">
             <div class="relative">
               <button
@@ -368,9 +416,9 @@ function TreeNode(props: { keyName: string; value: JsonValue; path: string[]; on
                 + {type() === "array" ? "Add Item" : "Add Property"}
               </button>
               <Show when={showTypeSelector()}>
-                <TypeSelector 
-                  onSelect={handleTypeSelect} 
-                  onClose={() => setShowTypeSelector(false)} 
+                <TypeSelector
+                  onSelect={handleTypeSelect}
+                  onClose={() => setShowTypeSelector(false)}
                 />
               </Show>
             </div>
@@ -383,23 +431,27 @@ function TreeNode(props: { keyName: string; value: JsonValue; path: string[]; on
 
 export default function JsonTreeView(props: Props) {
   const [showTypeSelector, setShowTypeSelector] = createSignal(false);
-  
-  const updateAtPath = (obj: unknown, path: string[], value: JsonValue): unknown => {
+
+  const updateAtPath = (
+    obj: unknown,
+    path: string[],
+    value: JsonValue,
+  ): unknown => {
     if (path.length === 0) return value;
-    
+
     const newObj = Array.isArray(obj) ? [...obj] : { ...(obj as JsonObject) };
     const [first, ...rest] = path;
-    
+
     if (rest.length === 0) {
       (newObj as Record<string, unknown>)[first] = value;
     } else {
       (newObj as Record<string, unknown>)[first] = updateAtPath(
         (newObj as Record<string, unknown>)[first],
         rest,
-        value
+        value,
       );
     }
-    
+
     return newObj;
   };
 
@@ -410,23 +462,26 @@ export default function JsonTreeView(props: Props) {
 
   const handleAddRootProperty = (jsonType: JsonType) => {
     if (!isObject(props.data)) return;
-    
+
     let newKeyName = "new_field";
     let counter = 1;
-    
+
     while (newKeyName in (props.data as JsonObject)) {
       newKeyName = `new_field_${counter++}`;
     }
-    
+
     const newValue = getDefaultValue(jsonType);
-    const updatedObj: JsonObject = { ...(props.data as JsonObject), [newKeyName]: newValue };
+    const updatedObj: JsonObject = {
+      ...(props.data as JsonObject),
+      [newKeyName]: newValue,
+    };
     props.onChange([], updatedObj as JsonValue);
     setShowTypeSelector(false);
   };
 
   const handleAddRootArrayItem = (jsonType: JsonType) => {
     if (!isArray(props.data)) return;
-    
+
     const newValue = getDefaultValue(jsonType);
     const updatedArray: JsonArray = [...(props.data as JsonArray), newValue];
     props.onChange([], updatedArray as JsonValue);
@@ -443,11 +498,11 @@ export default function JsonTreeView(props: Props) {
 
   const handleDuplicate = (path: string[], value: JsonValue) => {
     if (path.length === 0) return;
-    
+
     const parentPath = path.slice(0, -1);
     const currentKey = path[path.length - 1];
     const parent = getValueAtPath(props.data, parentPath);
-    
+
     if (isObject(parent)) {
       let newKeyName = `${currentKey}_copy`;
       let counter = 1;
@@ -455,7 +510,10 @@ export default function JsonTreeView(props: Props) {
         newKeyName = `${currentKey}_copy_${counter++}`;
       }
       const clonedValue = JSON.parse(JSON.stringify(value));
-      const updatedParent: JsonObject = { ...parent, [newKeyName]: clonedValue };
+      const updatedParent: JsonObject = {
+        ...parent,
+        [newKeyName]: clonedValue,
+      };
       const newData = updateAtPath(props.data, parentPath, updatedParent);
       props.onChange([], newData as JsonValue);
     } else if (isArray(parent)) {
@@ -476,14 +534,18 @@ export default function JsonTreeView(props: Props) {
                 type="button"
                 onClick={() => setShowTypeSelector(!showTypeSelector())}
                 class="flex items-center gap-1 px-2 py-1 text-xs text-[var(--accent)] hover:bg-[var(--bg-tertiary)] rounded"
-                title={isArray(props.data) ? "Add item to array" : "Add property to object"}
+                title={
+                  isArray(props.data)
+                    ? "Add item to array"
+                    : "Add property to object"
+                }
               >
                 + {isArray(props.data) ? "Add Item" : "Add Property"}
               </button>
               <Show when={showTypeSelector()}>
-                <TypeSelector 
-                  onSelect={handleRootTypeSelect} 
-                  onClose={() => setShowTypeSelector(false)} 
+                <TypeSelector
+                  onSelect={handleRootTypeSelect}
+                  onClose={() => setShowTypeSelector(false)}
                 />
               </Show>
             </div>
@@ -501,7 +563,11 @@ export default function JsonTreeView(props: Props) {
       </Show>
       <Show when={!isObject(props.data) && !isArray(props.data)}>
         <div class="flex items-center gap-2">
-          <ValueEditor value={props.data as JsonValue} path={[]} onChange={handleChange} />
+          <ValueEditor
+            value={props.data as JsonValue}
+            path={[]}
+            onChange={handleChange}
+          />
           <span class="text-gray-500 text-sm">({typeof props.data})</span>
         </div>
       </Show>

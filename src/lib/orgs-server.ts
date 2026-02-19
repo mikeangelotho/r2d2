@@ -47,7 +47,9 @@ async function writeOrgsFile(data: OrganizationsData): Promise<void> {
 }
 
 function generateId(): string {
-  return "id_" + Date.now().toString(36) + Math.random().toString(36).substring(2, 9);
+  return (
+    "id_" + Date.now().toString(36) + Math.random().toString(36).substring(2, 9)
+  );
 }
 
 export async function serverLoadOrgs(): Promise<OrganizationsData> {
@@ -60,7 +62,10 @@ export async function serverSaveOrgs(data: OrganizationsData): Promise<void> {
   await writeOrgsFile(data);
 }
 
-export async function serverCreateOrg(name: string, description: string): Promise<Organization> {
+export async function serverCreateOrg(
+  name: string,
+  description: string,
+): Promise<Organization> {
   "use server";
   const data = await readOrgsFile();
   const org: Organization = {
@@ -74,7 +79,11 @@ export async function serverCreateOrg(name: string, description: string): Promis
   return org;
 }
 
-export async function serverUpdateOrg(id: string, name: string, description: string): Promise<Organization | null> {
+export async function serverUpdateOrg(
+  id: string,
+  name: string,
+  description: string,
+): Promise<Organization | null> {
   "use server";
   const data = await readOrgsFile();
   const org = data.organizations.find((o) => o.id === id);
@@ -101,7 +110,7 @@ export async function serverCreateBucket(
   name: string,
   endpoint: string,
   region: string,
-  bucketName: string
+  bucketName: string,
 ): Promise<Bucket> {
   "use server";
   const data = await readOrgsFile();
@@ -123,7 +132,7 @@ export async function serverUpdateBucket(
   name: string,
   endpoint: string,
   region: string,
-  bucketName: string
+  bucketName: string,
 ): Promise<Bucket | null> {
   "use server";
   const data = await readOrgsFile();

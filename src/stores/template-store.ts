@@ -1,16 +1,27 @@
 import { createSignal, createMemo } from "solid-js";
-import { detectTemplate, validateAgainstTemplate, type Template, type ValidationResult, type JsonValue } from "~/lib/template-detector";
+import {
+  detectTemplate,
+  validateAgainstTemplate,
+  type Template,
+  type ValidationResult,
+  type JsonValue,
+} from "~/lib/template-detector";
 
 export type BlockMode = "warn" | "block";
 
-const [currentTemplate, setCurrentTemplate] = createSignal<Template | null>(null);
-const [validationResult, setValidationResult] = createSignal<ValidationResult>({ isValid: true, violations: [] });
+const [currentTemplate, setCurrentTemplate] = createSignal<Template | null>(
+  null,
+);
+const [validationResult, setValidationResult] = createSignal<ValidationResult>({
+  isValid: true,
+  violations: [],
+});
 const [blockMode, setBlockMode] = createSignal<BlockMode>("warn");
 const [templateDetected, setTemplateDetected] = createSignal(false);
 
 export function detectAndValidate(data: JsonValue): void {
   const template = detectTemplate(data);
-  
+
   if (template) {
     setCurrentTemplate(template);
     const result = validateAgainstTemplate(data, template);
@@ -45,16 +56,26 @@ export function canSave(): boolean {
 }
 
 export const templateStore = {
-  get template() { return currentTemplate(); },
-  validationResult() { return validationResult(); },
-  blockMode() { return blockMode(); },
+  get template() {
+    return currentTemplate();
+  },
+  validationResult() {
+    return validationResult();
+  },
+  blockMode() {
+    return blockMode();
+  },
   setBlockMode,
-  templateDetected() { return templateDetected(); },
+  templateDetected() {
+    return templateDetected();
+  },
   errorCount() {
-    return validationResult().violations.filter(v => v.severity === "error").length;
+    return validationResult().violations.filter((v) => v.severity === "error")
+      .length;
   },
   warningCount() {
-    return validationResult().violations.filter(v => v.severity === "warning").length;
+    return validationResult().violations.filter((v) => v.severity === "warning")
+      .length;
   },
   canSave() {
     if (blockMode() === "warn") {

@@ -1,4 +1,9 @@
-import { S3Client, ListObjectsV2Command, GetObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3";
+import {
+  S3Client,
+  ListObjectsV2Command,
+  GetObjectCommand,
+  PutObjectCommand,
+} from "@aws-sdk/client-s3";
 
 export interface R2Config {
   endpoint: string;
@@ -49,10 +54,10 @@ export async function listJsonFiles(): Promise<R2File[]> {
   });
 
   const response = await client.send(command);
-  
+
   return (response.Contents || [])
-    .filter(obj => obj.Key?.endsWith(".json"))
-    .map(obj => ({
+    .filter((obj) => obj.Key?.endsWith(".json"))
+    .map((obj) => ({
       key: obj.Key!,
       lastModified: obj.LastModified,
       size: obj.Size,
@@ -70,7 +75,7 @@ export async function getJsonFile(key: string): Promise<unknown> {
   });
 
   const response = await client.send(command);
-  
+
   if (!response.Body) {
     throw new Error("Empty file content");
   }
@@ -85,7 +90,7 @@ export async function putJsonFile(key: string, data: unknown): Promise<void> {
   }
 
   const content = JSON.stringify(data, null, 2);
-  
+
   const command = new PutObjectCommand({
     Bucket: currentConfig.bucketName,
     Key: key,

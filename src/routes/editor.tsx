@@ -1,6 +1,14 @@
 import { createSignal, Show, For, onMount } from "solid-js";
-import { serverGetJsonFile, serverPutJsonFile, serverListJsonFiles } from "~/lib/r2-server";
-import { detectAndValidate, templateStore, type BlockMode } from "~/stores/template-store";
+import {
+  serverGetJsonFile,
+  serverPutJsonFile,
+  serverListJsonFiles,
+} from "~/lib/r2-server";
+import {
+  detectAndValidate,
+  templateStore,
+  type BlockMode,
+} from "~/stores/template-store";
 import R2Config from "~/components/R2Config";
 import Sidebar from "~/components/Sidebar";
 import JsonTreeView from "~/components/JsonTreeView";
@@ -9,6 +17,7 @@ import PreviewPane from "~/components/PreviewPane";
 import TemplatePicker from "~/components/TemplatePicker";
 import NestedViewModal from "~/components/NestedViewModal";
 import Nav from "~/components/Nav";
+import { JsonValue } from "~/lib/template-detector";
 
 type ViewMode = "tree" | "table" | "preview";
 
@@ -23,15 +32,21 @@ export default function Editor() {
   const [viewMode, setViewMode] = createSignal<ViewMode>("tree");
   const [refreshKey, setRefreshKey] = createSignal(0);
   const [showTemplatePicker, setShowTemplatePicker] = createSignal(false);
-  const [templatePickerExistingKey, setTemplatePickerExistingKey] = createSignal<string | null>(null);
-  const [templatePickerExistingData, setTemplatePickerExistingData] = createSignal<Record<string, unknown> | null>(null);
-  const [nestedViewPath, setNestedViewPath] = createSignal<string[] | null>(null);
+  const [templatePickerExistingKey, setTemplatePickerExistingKey] =
+    createSignal<string | null>(null);
+  const [templatePickerExistingData, setTemplatePickerExistingData] =
+    createSignal<Record<string, unknown> | null>(null);
+  const [nestedViewPath, setNestedViewPath] = createSignal<string[] | null>(
+    null,
+  );
   const [showViolations, setShowViolations] = createSignal(false);
   const [sidebarOpen, setSidebarOpen] = createSignal(true);
   const [isConfigured, setIsConfigured] = createSignal(false);
 
   onMount(async () => {
-    const configured = await fetch("/api/r2/is-configured").then(r => r.json());
+    const configured = await fetch("/api/r2/is-configured").then((r) =>
+      r.json(),
+    );
     setIsConfigured(configured);
   });
 
@@ -54,7 +69,7 @@ export default function Editor() {
       const data = await serverGetJsonFile(key);
       setJsonData(data);
       setOriginalData(JSON.parse(JSON.stringify(data)));
-      detectAndValidate(data);
+      detectAndValidate(data as JsonValue);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to load file");
     } finally {
@@ -64,7 +79,7 @@ export default function Editor() {
 
   const handleDataChange = (_path: string[], newData: unknown) => {
     setJsonData(newData);
-    detectAndValidate(newData);
+    detectAndValidate(newData as JsonValue);
   };
 
   const handleNodeClick = (path: string[], _value: unknown) => {
@@ -72,10 +87,16 @@ export default function Editor() {
   };
 
   const handleNestedSave = (path: string[], newData: unknown) => {
-    const updateAtPath = (obj: unknown, p: string[], value: unknown): unknown => {
+    const updateAtPath = (
+      obj: unknown,
+      p: string[],
+      value: unknown,
+    ): unknown => {
       if (p.length === 0) return value;
 
-      const newObj = Array.isArray(obj) ? [...obj] : { ...(obj as Record<string, unknown>) };
+      const newObj = Array.isArray(obj)
+        ? [...obj]
+        : { ...(obj as Record<string, unknown>) };
       const [first, ...rest] = p;
 
       if (rest.length === 0) {
@@ -84,7 +105,7 @@ export default function Editor() {
         (newObj as Record<string, unknown>)[first] = updateAtPath(
           (newObj as Record<string, unknown>)[first],
           rest,
-          value
+          value,
         );
       }
 
@@ -103,12 +124,17 @@ export default function Editor() {
     setShowTemplatePicker(false);
     setTemplatePickerExistingKey(null);
     setTemplatePickerExistingData(null);
-    setRefreshKey(k => k + 1);
+    setRefreshKey((k) => k + 1);
     handleFileSelect(key);
   };
 
   const handleAddFromTemplate = () => {
-    if (selectedFile() && jsonData() && typeof jsonData() === "object" && !Array.isArray(jsonData())) {
+    if (
+      selectedFile() &&
+      jsonData() &&
+      typeof jsonData() === "object" &&
+      !Array.isArray(jsonData())
+    ) {
       setTemplatePickerExistingKey(selectedFile());
       setTemplatePickerExistingData(jsonData() as Record<string, unknown>);
     }
@@ -142,7 +168,9 @@ export default function Editor() {
   const handleDownload = () => {
     if (!jsonData()) return;
 
-    const blob = new Blob([JSON.stringify(jsonData(), null, 2)], { type: "application/json" });
+    const blob = new Blob([JSON.stringify(jsonData(), null, 2)], {
+      type: "application/json",
+    });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
@@ -153,7 +181,7 @@ export default function Editor() {
 
   const handleConnected = () => {
     setIsConfigured(true);
-    setRefreshKey(k => k + 1);
+    setRefreshKey((k) => k + 1);
   };
 
   const filePathParts = () => {
@@ -162,9 +190,21 @@ export default function Editor() {
   };
 
   const viewModeButtons = [
-    { mode: "tree" as ViewMode, label: "Tree", icon: "M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zm0 8a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zm12 0a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" },
-    { mode: "table" as ViewMode, label: "Table", icon: "M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" },
-    { mode: "preview" as ViewMode, label: "Raw", icon: "M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" },
+    {
+      mode: "tree" as ViewMode,
+      label: "Tree",
+      icon: "M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zm0 8a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zm12 0a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z",
+    },
+    {
+      mode: "table" as ViewMode,
+      label: "Table",
+      icon: "M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z",
+    },
+    {
+      mode: "preview" as ViewMode,
+      label: "Raw",
+      icon: "M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4",
+    },
   ];
 
   return (
@@ -198,8 +238,16 @@ export default function Editor() {
             <Show when={!selectedFile()}>
               <div class="flex-1 flex items-center justify-center">
                 <div class="text-center">
-                  <svg class="mx-auto w-12 h-12 text-[var(--text-muted)] mb-4 opacity-50" fill="currentColor" viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z" /></svg>
-                  <p class="text-sm text-[var(--text-muted)]">Select a file from the sidebar to begin</p>
+                  <svg
+                    class="mx-auto w-12 h-12 text-[var(--text-muted)] mb-4 opacity-50"
+                    fill="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z" />
+                  </svg>
+                  <p class="text-sm text-[var(--text-muted)]">
+                    Select a file from the sidebar to begin
+                  </p>
                 </div>
               </div>
             </Show>
@@ -215,9 +263,33 @@ export default function Editor() {
                       title={sidebarOpen() ? "Hide sidebar" : "Show sidebar"}
                     >
                       {sidebarOpen() ? (
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7" /></svg>
+                        <svg
+                          class="w-4 h-4"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M11 19l-7-7 7-7m8 14l-7-7 7-7"
+                          />
+                        </svg>
                       ) : (
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7" /></svg>
+                        <svg
+                          class="w-4 h-4"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M13 5l7 7-7 7M5 5l7 7-7 7"
+                          />
+                        </svg>
                       )}
                     </button>
 
@@ -225,11 +297,25 @@ export default function Editor() {
                       <For each={filePathParts()}>
                         {(part, index) => (
                           <>
-                            <span class={`text-sm truncate ${index() === filePathParts().length - 1 ? "text-[var(--text-primary)] font-medium" : "text-[var(--text-muted)]"}`}>
+                            <span
+                              class={`text-sm truncate ${index() === filePathParts().length - 1 ? "text-[var(--text-primary)] font-medium" : "text-[var(--text-muted)]"}`}
+                            >
                               {part}
                             </span>
                             <Show when={index() < filePathParts().length - 1}>
-                              <svg class="w-3.5 h-3.5 text-[var(--text-muted)] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
+                              <svg
+                                class="w-3.5 h-3.5 text-[var(--text-muted)] shrink-0"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  stroke-linecap="round"
+                                  stroke-linejoin="round"
+                                  stroke-width="2"
+                                  d="M9 5l7 7-7 7"
+                                />
+                              </svg>
                             </Show>
                           </>
                         )}
@@ -251,15 +337,45 @@ export default function Editor() {
                         }`}
                       >
                         {templateStore.validationResult().isValid ? (
-                          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                          <svg
+                            class="w-3.5 h-3.5"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              stroke-linecap="round"
+                              stroke-linejoin="round"
+                              stroke-width="2"
+                              d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                            />
+                          </svg>
                         ) : (
-                          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                          <svg
+                            class="w-3.5 h-3.5"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              stroke-linecap="round"
+                              stroke-linejoin="round"
+                              stroke-width="2"
+                              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                            />
+                          </svg>
                         )}
-                        {templateStore.validationResult().isValid ? "Valid" : `${templateStore.errorCount()} issues`}
+                        {templateStore.validationResult().isValid
+                          ? "Valid"
+                          : `${templateStore.errorCount()} issues`}
                       </button>
                       <select
                         value={templateStore.blockMode()}
-                        onChange={(e) => templateStore.setBlockMode(e.currentTarget.value as BlockMode)}
+                        onChange={(e) =>
+                          templateStore.setBlockMode(
+                            e.currentTarget.value as BlockMode,
+                          )
+                        }
                         class="input input-sm bg-[var(--bg-tertiary)] text-xs py-1"
                       >
                         <option value="warn">Warn</option>
@@ -280,7 +396,19 @@ export default function Editor() {
                               : "text-[var(--text-muted)] hover:text-[var(--text-secondary)]"
                           }`}
                         >
-                          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d={icon} /></svg>
+                          <svg
+                            class="w-3.5 h-3.5"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              stroke-linecap="round"
+                              stroke-linejoin="round"
+                              stroke-width="2"
+                              d={icon}
+                            />
+                          </svg>
                           {label}
                         </button>
                       )}
@@ -288,11 +416,19 @@ export default function Editor() {
                   </div>
                 </div>
 
-                <Show when={showViolations() && templateStore.templateDetected() && !templateStore.validationResult().isValid}>
+                <Show
+                  when={
+                    showViolations() &&
+                    templateStore.templateDetected() &&
+                    !templateStore.validationResult().isValid
+                  }
+                >
                   <div class="max-h-40 overflow-y-auto border-b border-[var(--border-subtle)] bg-[var(--error-subtle)]">
                     <div class="px-4 py-3">
                       <div class="flex items-center justify-between mb-2">
-                        <span class="text-xs font-semibold text-[var(--error)] uppercase tracking-wider">Template Violations</span>
+                        <span class="text-xs font-semibold text-[var(--error)] uppercase tracking-wider">
+                          Template Violations
+                        </span>
                         <button
                           type="button"
                           onClick={() => setShowViolations(false)}
@@ -305,9 +441,14 @@ export default function Editor() {
                         <For each={templateStore.validationResult().violations}>
                           {(violation) => (
                             <div class="flex items-start gap-2 text-xs">
-                              <span class="text-[var(--text-muted)] shrink-0">[{violation.index}]</span>
-                              <span class={`${violation.severity === "error" ? "text-[var(--error)]" : "text-[var(--warning)]"}`}>
-                                {violation.path ? `${violation.path}: ` : ""}{violation.message}
+                              <span class="text-[var(--text-muted)] shrink-0">
+                                [{violation.index}]
+                              </span>
+                              <span
+                                class={`${violation.severity === "error" ? "text-[var(--error)]" : "text-[var(--warning)]"}`}
+                              >
+                                {violation.path ? `${violation.path}: ` : ""}
+                                {violation.message}
                               </span>
                             </div>
                           )}
@@ -325,7 +466,9 @@ export default function Editor() {
 
                 <Show when={success()}>
                   <div class="px-4 py-2.5 bg-[var(--success-subtle)] border-b border-[var(--border-subtle)]">
-                    <span class="text-sm text-[var(--success)]">{success()}</span>
+                    <span class="text-sm text-[var(--success)]">
+                      {success()}
+                    </span>
                   </div>
                 </Show>
 
@@ -333,17 +476,27 @@ export default function Editor() {
                   <Show when={loading()}>
                     <div class="flex items-center justify-center gap-2 py-16">
                       <div class="w-6 h-6 border-2 border-[var(--accent)] border-t-transparent rounded-full animate-spin" />
-                      <span class="text-sm text-[var(--text-muted)]">Loading...</span>
+                      <span class="text-sm text-[var(--text-muted)]">
+                        Loading...
+                      </span>
                     </div>
                   </Show>
 
                   <Show when={!loading() && jsonData()}>
                     <div class="h-full overflow-auto">
                       <Show when={viewMode() === "tree"}>
-                        <JsonTreeView data={jsonData()!} onChange={handleDataChange} onNodeClick={handleNodeClick} />
+                        <JsonTreeView
+                          data={jsonData()!}
+                          onChange={handleDataChange}
+                          onNodeClick={handleNodeClick}
+                        />
                       </Show>
                       <Show when={viewMode() === "table"}>
-                        <JsonTableView data={jsonData()!} onChange={handleDataChange} onNodeClick={handleNodeClick} />
+                        <JsonTableView
+                          data={jsonData()!}
+                          onChange={handleDataChange}
+                          onNodeClick={handleNodeClick}
+                        />
                       </Show>
                       <Show when={viewMode() === "preview"}>
                         <PreviewPane data={jsonData()!} />
@@ -357,10 +510,24 @@ export default function Editor() {
                     <button
                       type="button"
                       onClick={handleSave}
-                      disabled={saving() || !hasChanges() || !templateStore.canSave()}
+                      disabled={
+                        saving() || !hasChanges() || !templateStore.canSave()
+                      }
                       class="btn-primary text-sm"
                     >
-                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" /></svg>
+                      <svg
+                        class="w-4 h-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"
+                        />
+                      </svg>
                       {saving() ? "Saving..." : "Save"}
                     </button>
                     <button
@@ -369,7 +536,19 @@ export default function Editor() {
                       disabled={!jsonData()}
                       class="btn-secondary text-sm"
                     >
-                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                      <svg
+                        class="w-4 h-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+                        />
+                      </svg>
                       Download
                     </button>
                     <button
@@ -378,13 +557,27 @@ export default function Editor() {
                       disabled={!jsonData()}
                       class="btn-ghost text-sm"
                     >
-                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
+                      <svg
+                        class="w-4 h-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M12 4v16m8-8H4"
+                        />
+                      </svg>
                       Template
                     </button>
                   </div>
                   <div class="text-xs text-[var(--text-muted)]">
                     <Show when={!templateStore.canSave()}>
-                      <span class="text-[var(--error)]">Template violations — </span>
+                      <span class="text-[var(--error)]">
+                        Template violations —{" "}
+                      </span>
                     </Show>
                     {hasChanges() ? "Unsaved changes" : "All changes saved"}
                   </div>

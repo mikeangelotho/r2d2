@@ -1,4 +1,10 @@
-export type JsonValue = string | number | boolean | null | JsonObject | JsonArray;
+export type JsonValue =
+  | string
+  | number
+  | boolean
+  | null
+  | JsonObject
+  | JsonArray;
 export type JsonObject = { [key: string]: JsonValue };
 export type JsonArray = JsonValue[];
 
@@ -76,20 +82,20 @@ export function detectTemplate(data: unknown): Template | null {
 
   for (const key of keys) {
     const valuesForKey = objects
-      .map(obj => obj[key])
-      .filter(val => val !== undefined);
+      .map((obj) => obj[key])
+      .filter((val) => val !== undefined);
 
     if (valuesForKey.length === 0) {
       continue;
     }
 
     const types = new Set(valuesForKey.map(getValueType));
-    
+
     if (types.size > 1) {
       continue;
     }
 
-    const presentCount = objects.filter(obj => key in obj).length;
+    const presentCount = objects.filter((obj) => key in obj).length;
     const required = presentCount === objects.length;
 
     fields[key] = {
@@ -105,7 +111,10 @@ export function detectTemplate(data: unknown): Template | null {
   return { fields, sampleSize: objects.length };
 }
 
-export function validateAgainstTemplate(data: unknown, template: Template): ValidationResult {
+export function validateAgainstTemplate(
+  data: unknown,
+  template: Template,
+): ValidationResult {
   const violations: Violation[] = [];
 
   if (!isArray(data)) {
@@ -172,14 +181,16 @@ export function validateAgainstTemplate(data: unknown, template: Template): Vali
   };
 }
 
-export function getViolationsByEntry(result: ValidationResult): Map<number, Violation[]> {
+export function getViolationsByEntry(
+  result: ValidationResult,
+): Map<number, Violation[]> {
   const byEntry = new Map<number, Violation[]>();
-  
+
   for (const violation of result.violations) {
     const existing = byEntry.get(violation.index) || [];
     existing.push(violation);
     byEntry.set(violation.index, existing);
   }
-  
+
   return byEntry;
 }

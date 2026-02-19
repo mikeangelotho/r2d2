@@ -8,8 +8,12 @@ import "./app.css";
 export default function App() {
   return (
     <Router
-      root={props => (
-        <Suspense fallback={<div class="p-4 text-sm text-[var(--text-muted)]">Loading...</div>}>
+      root={(props) => (
+        <Suspense
+          fallback={
+            <div class="p-4 text-sm text-[var(--text-muted)]">Loading...</div>
+          }
+        >
           {props.children}
         </Suspense>
       )}
