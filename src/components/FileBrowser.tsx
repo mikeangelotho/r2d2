@@ -1,4 +1,4 @@
-import { createSignal, For, Show, onMount } from "solid-js";
+import { createSignal, For, Show, onMount, createEffect } from "solid-js";
 import { serverListJsonFiles } from "~/lib/r2-server";
 import type { R2File } from "~/lib/r2";
 
@@ -13,6 +13,7 @@ export default function FileBrowser(props: Props) {
   const [files, setFiles] = createSignal<R2File[]>([]);
   const [loading, setLoading] = createSignal(false);
   const [error, setError] = createSignal("");
+  const [isOpen, setIsOpen] = createSignal(false);
   
   const loadFiles = async () => {
     setLoading(true);
@@ -31,84 +32,108 @@ export default function FileBrowser(props: Props) {
     loadFiles();
   });
 
+  createEffect(() => {
+    props.refreshTrigger;
+    loadFiles();
+  });
+
+  const selectedFileName = () => {
+    if (!props.selectedFile) return null;
+    return props.selectedFile.split("/").pop();
+  };
+
   return (
-    <div class="glass-elevated rounded-lg overflow-hidden h-full flex flex-col">
-        <div class="flex items-center justify-between px-4 py-3 border-b border-[var(--border-subtle)]">
-          <div class="flex items-center gap-2">
-            <span class="font-mono text-xs text-[var(--text-muted)] tracking-wide">▸</span>
-            <span class="font-mono text-xs tracking-wider text-[var(--accent)]">FILES</span>
-            <span class="font-mono text-xs text-[var(--text-muted)]">[{files().length}]</span>
-          </div>
-          <div class="flex items-center gap-2">
-            <Show when={props.onCreateFromTemplate}>
+    <div class="relative">
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen())}
+        class="w-full flex items-center justify-between card px-3 py-2 text-left hover:border-[var(--border-subtle-hover)] transition-colors"
+      >
+        <div class="flex items-center gap-2 min-w-0">
+          <Show when={props.selectedFile} fallback={<span class="text-[var(--text-muted)]">Select file...</span>}>
+            <span class="text-sm text-[var(--text-primary)] truncate">{selectedFileName()}</span>
+          </Show>
+        </div>
+        <svg class="w-4 h-4 text-[var(--text-muted)] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+      
+      <Show when={isOpen()}>
+        <div class="absolute top-full left-0 right-0 mt-1 card max-h-64 overflow-y-auto z-20 shadow-lg">
+          <div class="sticky top-0 flex items-center justify-between px-3 py-2 border-b border-[var(--border-subtle)] bg-[var(--bg-secondary)]">
+            <span class="text-xs text-[var(--text-muted)]">{files().length} files</span>
+            <div class="flex items-center gap-2">
+              <Show when={props.onCreateFromTemplate}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsOpen(false);
+                    props.onCreateFromTemplate!("");
+                  }}
+                  class="text-xs text-[var(--accent)] hover:text-[var(--accent-hover)]"
+                >
+                  + New
+                </button>
+              </Show>
               <button
                 type="button"
-                onClick={() => props.onCreateFromTemplate!("")}
-                class="text-[var(--accent)] hover:text-[var(--accent)] transition-colors font-mono text-xs"
-                title="Create from Template"
+                onClick={loadFiles}
+                disabled={loading()}
+                class="text-xs text-[var(--text-muted)] hover:text-[var(--text-primary)] disabled:opacity-50"
               >
-                + NEW
+                ↻
               </button>
-            </Show>
-            <button
-              type="button"
-              onClick={loadFiles}
-              disabled={loading()}
-              class="text-[var(--text-muted)] hover:text-[var(--accent)] transition-colors font-mono text-xs disabled:opacity-50"
-            >
-              {loading() ? "LOADING" : "↻"}
-            </button>
+            </div>
           </div>
-        </div>
-      
-      <Show when={error()}>
-        <div class="px-4 py-3 border-b border-[var(--border-subtle)]">
-          <span class="text-[var(--error)] font-mono text-xs">ERR: {error()}</span>
+          
+          <Show when={error()}>
+            <div class="px-3 py-2 text-xs text-[var(--error)]">{error()}</div>
+          </Show>
+          
+          <Show when={files().length === 0 && !loading() && !error()}>
+            <div class="px-3 py-4 text-center text-xs text-[var(--text-muted)]">No files found</div>
+          </Show>
+          
+          <For each={files()}>
+            {(file) => (
+              <button
+                type="button"
+                onClick={() => {
+                  props.onFileSelect(file.key);
+                  setIsOpen(false);
+                }}
+                class={`w-full text-left px-3 py-2 text-sm border-b border-[var(--border-subtle)] last:border-0 transition-colors ${
+                  props.selectedFile === file.key
+                    ? "bg-[var(--accent-subtle)] text-[var(--accent)]"
+                    : "hover:bg-[var(--bg-tertiary)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                }`}
+              >
+                <div class="flex items-center justify-between">
+                  <span class="truncate">{file.key.split("/").pop()}</span>
+                  <Show when={file.size !== undefined}>
+                    <span class="text-xs text-[var(--text-muted)] ml-2 shrink-0">
+                      {(file.size! / 1024).toFixed(1)}K
+                    </span>
+                  </Show>
+                </div>
+                <Show when={file.key.includes("/")}>
+                  <div class="text-xs text-[var(--text-muted)] truncate mt-0.5">
+                    {file.key.split("/").slice(0, -1).join("/")}
+                  </div>
+                </Show>
+              </button>
+            )}
+          </For>
         </div>
       </Show>
       
-      <div class="flex-1 overflow-y-auto">
-        <Show when={files().length === 0 && !loading() && !error()}>
-          <div class="px-4 py-8 text-center">
-            <span class="font-mono text-xs text-[var(--text-muted)]">NO FILES FOUND</span>
-          </div>
-        </Show>
-        
-        <For each={files()}>
-          {(file) => (
-            <button
-              type="button"
-              onClick={() => props.onFileSelect(file.key)}
-              class={`w-full text-left px-4 py-2.5 border-b border-[var(--border-subtle)] transition-all group ${
-                props.selectedFile === file.key
-                  ? "bg-[var(--accent-subtle)] border-l-2 border-l-[var(--accent)]"
-                  : "hover:bg-[var(--bg-elevated)] border-l-2 border-l-transparent"
-              }`}
-            >
-              <div class="flex items-center justify-between">
-                <div class="flex items-center gap-2 min-w-0">
-                  <span class="text-[var(--accent)] font-mono text-xs">›</span>
-                  <span class={`font-mono text-xs truncate ${
-                    props.selectedFile === file.key ? "text-[var(--accent)]" : "text-[var(--text-primary)]"
-                  }`}>
-                    {file.key.split("/").pop()}
-                  </span>
-                </div>
-                <Show when={file.size !== undefined}>
-                  <span class="font-mono text-xs text-[var(--text-muted)] ml-2 shrink-0">
-                    {(file.size! / 1024).toFixed(1)}K
-                  </span>
-                </Show>
-              </div>
-              <Show when={file.key.includes("/")}>
-                <span class="font-mono text-xs text-[var(--text-muted)] opacity-50 pl-5">
-                  {file.key.split("/").slice(0, -1).join("/")}
-                </span>
-              </Show>
-            </button>
-          )}
-        </For>
-      </div>
+      <Show when={isOpen()}>
+        <div 
+          class="fixed inset-0 z-10" 
+          onClick={() => setIsOpen(false)}
+        />
+      </Show>
     </div>
   );
 }

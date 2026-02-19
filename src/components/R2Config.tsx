@@ -7,7 +7,7 @@ interface Props {
 }
 
 export default function R2Config(props: Props) {
-  const [expanded, setExpanded] = createSignal(true);
+  const [showConfig, setShowConfig] = createSignal(false);
   const [endpoint, setEndpoint] = createSignal("");
   const [accessKeyId, setAccessKeyId] = createSignal("");
   const [secretAccessKey, setSecretAccessKey] = createSignal("");
@@ -49,6 +49,7 @@ export default function R2Config(props: Props) {
 
       await serverInitR2(config);
       setIsConnected(true);
+      setShowConfig(false);
       
       if (typeof window !== "undefined") {
         localStorage.setItem("r2_endpoint", endpoint());
@@ -66,94 +67,81 @@ export default function R2Config(props: Props) {
   };
 
   return (
-    <div class="glass-elevated rounded-lg overflow-hidden">
-      <button
-        type="button"
-        class="flex items-center justify-between w-full px-4 py-3 text-left hover:bg-[var(--bg-elevated)] transition-colors"
-        onClick={() => setExpanded(!expanded())}
-      >
-        <div class="flex items-center gap-3">
-          <div class={`led ${isConnected() ? "led-green led-pulse" : "led-amber"}`}></div>
-          <span class="font-mono text-sm tracking-wider">R2 CONFIG</span>
-        </div>
-        <div class="flex items-center gap-3">
-          <span class="font-mono text-xs text-[var(--text-muted)]">
-            {isConnected() ? bucketName() : "NOT CONNECTED"}
-          </span>
-          <svg 
-            class={`w-4 h-4 text-[var(--text-muted)] transition-transform ${expanded() ? "rotate-180" : ""}`} 
-            fill="none" 
-            stroke="currentColor" 
-            viewBox="0 0 24 24"
+    <div class="mb-4">
+      <Show when={isConnected() && !showConfig()}>
+        <div class="flex items-center justify-between card px-3 py-2">
+          <div class="flex items-center gap-2">
+            <span class="status-dot status-dot-success"></span>
+            <span class="text-sm text-[var(--text-secondary)]">{bucketName()}</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setShowConfig(true)}
+            class="btn-ghost text-xs"
           >
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-          </svg>
+            Configure
+          </button>
         </div>
-      </button>
-      
-      <Show when={expanded()}>
-        <div class="px-4 pb-4 border-t border-[var(--border-subtle)]">
-          <div class="pt-4 space-y-3">
-            <div>
-              <label class="block font-mono text-xs text-[var(--text-muted)] mb-1.5 tracking-wide">ENDPOINT</label>
-              <input
-                type="text"
-                value={endpoint()}
-                onInput={(e) => setEndpoint(e.currentTarget.value)}
-                placeholder="https://xxx.r2.cloudflarestorage.com"
-                class="input font-mono text-sm"
-              />
+      </Show>
+
+      <Show when={!isConnected() || showConfig()}>
+        <div class="card p-3">
+          <Show when={isConnected()}>
+            <div class="flex items-center justify-between mb-3">
+              <span class="text-sm font-medium">Connection Settings</span>
+              <button
+                type="button"
+                onClick={() => setShowConfig(false)}
+                class="text-[var(--text-muted)] hover:text-[var(--text-primary)] text-lg leading-none"
+              >
+                ×
+              </button>
             </div>
-            
-            <div class="grid grid-cols-2 gap-3">
-              <div>
-                <label class="block font-mono text-xs text-[var(--text-muted)] mb-1.5 tracking-wide">ACCESS KEY</label>
-                <input
-                  type="text"
-                  value={accessKeyId()}
-                  onInput={(e) => setAccessKeyId(e.currentTarget.value)}
-                  placeholder="AKIA..."
-                  class="input font-mono text-sm"
-                />
-              </div>
-              
-              <div>
-                <label class="block font-mono text-xs text-[var(--text-muted)] mb-1.5 tracking-wide">SECRET KEY</label>
-                <input
-                  type="password"
-                  value={secretAccessKey()}
-                  onInput={(e) => setSecretAccessKey(e.currentTarget.value)}
-                  placeholder="••••••••"
-                  class="input font-mono text-sm"
-                />
-              </div>
-            </div>
-            
-            <div>
-              <label class="block font-mono text-xs text-[var(--text-muted)] mb-1.5 tracking-wide">BUCKET</label>
-              <input
-                type="text"
-                value={bucketName()}
-                onInput={(e) => setBucketName(e.currentTarget.value)}
-                placeholder="my-bucket"
-                class="input font-mono text-sm"
-              />
-            </div>
-            
-            <Show when={error()}>
-              <div class="flex items-center gap-2 text-[var(--error)] text-sm font-mono">
-                <span class="led led-red"></span>
-                {error()}
-              </div>
-            </Show>
-            
+          </Show>
+          
+          <div class="grid grid-cols-2 gap-2">
+            <input
+              type="text"
+              value={endpoint()}
+              onInput={(e) => setEndpoint(e.currentTarget.value)}
+              placeholder="Endpoint"
+              class="input text-sm"
+            />
+            <input
+              type="text"
+              value={bucketName()}
+              onInput={(e) => setBucketName(e.currentTarget.value)}
+              placeholder="Bucket"
+              class="input text-sm"
+            />
+            <input
+              type="text"
+              value={accessKeyId()}
+              onInput={(e) => setAccessKeyId(e.currentTarget.value)}
+              placeholder="Access Key"
+              class="input text-sm col-span-2"
+            />
+            <input
+              type="password"
+              value={secretAccessKey()}
+              onInput={(e) => setSecretAccessKey(e.currentTarget.value)}
+              placeholder="Secret Key"
+              class="input text-sm col-span-2"
+            />
+          </div>
+          
+          <Show when={error()}>
+            <div class="mt-2 text-xs text-[var(--error)]">{error()}</div>
+          </Show>
+          
+          <div class="mt-3 flex justify-end">
             <button
               type="button"
               onClick={handleConnect}
               disabled={loading() || !endpoint() || !accessKeyId() || !secretAccessKey() || !bucketName()}
-              class="btn-primary w-full font-mono text-sm tracking-wide"
+              class="btn-primary text-sm"
             >
-              {loading() ? "INITIALIZING..." : "ESTABLISH CONNECTION"}
+              {loading() ? "Connecting..." : "Connect"}
             </button>
           </div>
         </div>

@@ -84,11 +84,11 @@ export default function NestedViewModal(props: Props) {
   };
 
   return (
-    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-      <div class="glass-elevated rounded-lg w-[900px] max-h-[85vh] flex flex-col">
-        <div class="flex items-center justify-between px-6 py-4 border-b border-[var(--border-subtle)]">
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+      <div class="card rounded-lg w-[800px] max-h-[85vh] flex flex-col">
+        <div class="flex items-center justify-between px-5 py-3 border-b border-[var(--border-subtle)]">
           <div class="flex items-center gap-2 overflow-x-auto">
-            <span class="font-mono text-sm text-[var(--accent)]">▸</span>
+            <span class="text-sm text-[var(--accent)]">▸</span>
             <For each={breadcrumbs()}>
               {(item, index) => (
                 <>
@@ -98,7 +98,7 @@ export default function NestedViewModal(props: Props) {
                   <button
                     type="button"
                     onClick={() => handleBreadcrumbClick(item.path)}
-                    class={`font-mono text-sm hover:text-[var(--accent)] transition-colors ${
+                    class={`text-sm hover:text-[var(--accent)] transition-colors ${
                       index() === breadcrumbs().length - 1
                         ? "text-[var(--text-primary)]"
                         : "text-[var(--text-secondary)]"
@@ -119,30 +119,30 @@ export default function NestedViewModal(props: Props) {
           </button>
         </div>
 
-        <div class="flex items-center gap-1 px-6 py-2 border-b border-[var(--border-subtle)] bg-[var(--bg-elevated)]">
+        <div class="flex items-center gap-1 px-5 py-2 border-b border-[var(--border-subtle)] bg-[var(--bg-tertiary)]">
           <button
             type="button"
             onClick={() => setViewMode("tree")}
-            class={`px-3 py-1 rounded text-xs font-mono transition-all ${
+            class={`px-3 py-1 rounded-full text-xs transition-colors ${
               viewMode() === "tree"
-                ? "bg-[var(--accent)] text-black"
-                : "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)]"
+                ? "bg-[var(--accent)] text-white"
+                : "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-elevated)]"
             }`}
           >
-            TREE
+            Tree
           </button>
           <button
             type="button"
             onClick={() => setViewMode("table")}
-            class={`px-3 py-1 rounded text-xs font-mono transition-all ${
+            class={`px-3 py-1 rounded-full text-xs transition-colors ${
               viewMode() === "table"
-                ? "bg-[var(--accent)] text-black"
-                : "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)]"
+                ? "bg-[var(--accent)] text-white"
+                : "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-elevated)]"
             }`}
           >
-            TABLE
+            Table
           </button>
-          <span class="ml-auto font-mono text-xs text-[var(--text-muted)]">
+          <span class="ml-auto text-xs text-[var(--text-muted)]">
             Click on objects/arrays to drill down
           </span>
         </div>
@@ -159,17 +159,18 @@ export default function NestedViewModal(props: Props) {
             <JsonTableView 
               data={currentData()!} 
               onChange={handleChange}
+              onNodeClick={handleTreeNodeClick}
             />
           </Show>
         </div>
 
-        <div class="flex items-center justify-end px-6 py-3 border-t border-[var(--border-subtle)] bg-[var(--bg-elevated)]">
+        <div class="flex items-center justify-end px-5 py-3 border-t border-[var(--border-subtle)] bg-[var(--bg-tertiary)]">
           <button
             type="button"
             onClick={props.onClose}
-            class="btn-secondary font-mono text-xs"
+            class="btn-secondary text-xs"
           >
-            CLOSE
+            Close
           </button>
         </div>
       </div>

@@ -1,5 +1,6 @@
-import { createSignal, Show } from "solid-js";
+import { createSignal, Show, For } from "solid-js";
 import { serverGetJsonFile, serverPutJsonFile } from "~/lib/r2-server";
+import { detectAndValidate, clearTemplateState, templateStore, type BlockMode } from "~/stores/template-store";
 import R2Config from "~/components/R2Config";
 import FileBrowser from "~/components/FileBrowser";
 import JsonTreeView from "~/components/JsonTreeView";
@@ -24,6 +25,7 @@ export default function Editor() {
   const [templatePickerExistingKey, setTemplatePickerExistingKey] = createSignal<string | null>(null);
   const [templatePickerExistingData, setTemplatePickerExistingData] = createSignal<Record<string, unknown> | null>(null);
   const [nestedViewPath, setNestedViewPath] = createSignal<string[] | null>(null);
+  const [showViolations, setShowViolations] = createSignal(false);
   
   const hasChanges = () => {
     return JSON.stringify(jsonData()) !== JSON.stringify(originalData());
@@ -44,15 +46,16 @@ export default function Editor() {
       const data = await serverGetJsonFile(key);
       setJsonData(data);
       setOriginalData(JSON.parse(JSON.stringify(data)));
+      detectAndValidate(data);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to load file");
     } finally {
       setLoading(false);
     }
   };
-  
   const handleDataChange = (_path: string[], newData: unknown) => {
     setJsonData(newData);
+    detectAndValidate(newData);
   };
   
   const handleNodeClick = (path: string[], _value: unknown) => {
@@ -106,6 +109,11 @@ export default function Editor() {
   const handleSave = async () => {
     if (!selectedFile() || !jsonData()) return;
     
+    if (!templateStore.canSave()) {
+      setError("Cannot save: template violations must be resolved");
+      return;
+    }
+    
     setSaving(true);
     setError("");
     setSuccess("");
@@ -113,8 +121,8 @@ export default function Editor() {
     try {
       await serverPutJsonFile(selectedFile()!, jsonData());
       setOriginalData(JSON.parse(JSON.stringify(jsonData())));
-      setSuccess("Saved successfully!");
-      setTimeout(() => setSuccess(""), 3000);
+      setSuccess("Saved");
+      setTimeout(() => setSuccess(""), 2000);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to save");
     } finally {
@@ -139,176 +147,215 @@ export default function Editor() {
   };
   
   return (
-    <div class="min-h-screen bg-[var(--bg-primary)] pt-14">
-      <div class="fixed inset-0 pointer-events-none overflow-hidden">
-        <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_top,var(--accent-subtle)_0%,transparent_50%)] opacity-30"></div>
-      </div>
+    <div class="min-h-screen bg-[var(--bg-primary)] p-4 max-w-5xl mx-auto">
+      <R2Config onConnected={handleConnected} />
       
-      <div class="relative z-10 p-4 max-w-[1920px] mx-auto">
-        <R2Config onConnected={handleConnected} />
-        
-        <div class="grid grid-cols-1 lg:grid-cols-5 gap-4">
-          <div class="lg:col-span-1 min-h-[500px]">
-            <FileBrowser
-              selectedFile={selectedFile()}
-              onFileSelect={handleFileSelect}
-              refreshTrigger={refreshKey()}
-              onCreateFromTemplate={() => setShowTemplatePicker(true)}
-            />
+      <Show when={!selectedFile()}>
+        <div class="card p-12 text-center">
+          <p class="text-sm text-[var(--text-muted)]">Select a file to begin</p>
+        </div>
+      </Show>
+      
+      <Show when={selectedFile()}>
+        <div class="card overflow-hidden">
+          <div class="flex items-center justify-between px-4 py-3 border-b border-[var(--border-subtle)]">
+            <div class="flex items-center gap-3 min-w-0">
+              <span class="text-sm text-[var(--text-primary)] truncate">{selectedFile()?.split("/").pop()}</span>
+              <Show when={hasChanges()}>
+                <span class="text-xs text-[var(--warning)]">●</span>
+              </Show>
+              <Show when={templateStore.templateDetected()}>
+                <button
+                  type="button"
+                  onClick={() => setShowViolations(!showViolations())}
+                  class={`flex items-center gap-1 px-2 py-0.5 rounded-full text-xs transition-colors ${
+                    templateStore.validationResult().isValid
+                      ? "bg-[rgba(16,185,129,0.1)] text-[var(--success)] hover:bg-[rgba(16,185,129,0.2)]"
+                      : "bg-[rgba(239,68,68,0.1)] text-[var(--error)] hover:bg-[rgba(239,68,68,0.2)]"
+                  }`}
+                >
+                  <span class={templateStore.validationResult().isValid ? "●" : "●"}
+                  >{templateStore.validationResult().isValid ? "Valid" : `${templateStore.errorCount()} issues`}</span>
+                </button>
+                <select
+                  value={templateStore.blockMode()}
+                  onChange={(e) => templateStore.setBlockMode(e.currentTarget.value as BlockMode)}
+                  class="text-xs bg-[var(--bg-tertiary)] border border-[var(--border-subtle)] rounded px-2 py-0.5 text-[var(--text-secondary)] focus:outline-none"
+                >
+                  <option value="warn">Warn</option>
+                  <option value="block">Block</option>
+                </select>
+              </Show>
+            </div>
+            
+            <div class="flex items-center gap-1">
+              <button
+                type="button"
+                onClick={() => setViewMode("tree")}
+                class={`px-3 py-1 rounded-full text-xs transition-colors ${
+                  viewMode() === "tree"
+                    ? "bg-[var(--accent)] text-white"
+                    : "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)]"
+                }`}
+              >
+                Tree
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewMode("table")}
+                class={`px-3 py-1 rounded-full text-xs transition-colors ${
+                  viewMode() === "table"
+                    ? "bg-[var(--accent)] text-white"
+                    : "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)]"
+                }`}
+              >
+                Table
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewMode("preview")}
+                class={`px-3 py-1 rounded-full text-xs transition-colors ${
+                  viewMode() === "preview"
+                    ? "bg-[var(--accent)] text-white"
+                    : "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)]"
+                }`}
+              >
+                Preview
+              </button>
+            </div>
           </div>
           
-          <div class="lg:col-span-4">
-            <Show when={!selectedFile()}>
-              <div class="glass-elevated rounded-lg p-12 text-center min-h-[500px] flex flex-col items-center justify-center">
-                <div class="led led-amber mb-4"></div>
-                <p class="font-mono text-sm text-[var(--text-muted)] tracking-wide">SELECT A FILE TO BEGIN</p>
-              </div>
-            </Show>
-            
-            <Show when={selectedFile()}>
-              <div class="glass-elevated rounded-lg overflow-hidden">
-                <div class="flex items-center justify-between px-4 py-3 border-b border-[var(--border-subtle)] bg-[var(--bg-elevated)]">
-                  <div class="flex items-center gap-3 min-w-0">
-                    <span class="font-mono text-xs text-[var(--accent)]">▸</span>
-                    <h2 class="font-mono text-sm text-[var(--text-primary)] truncate">{selectedFile()?.split("/").pop()}</h2>
-                    <Show when={hasChanges()}>
-                      <span class="text-[var(--warning)] font-mono text-xs blink">●</span>
-                    </Show>
-                  </div>
-                  
-                  <div class="flex items-center gap-1">
-                    <button
-                      type="button"
-                      onClick={() => setViewMode("tree")}
-                      class={`px-3 py-1.5 rounded text-xs font-mono transition-all ${
-                        viewMode() === "tree"
-                          ? "bg-[var(--accent)] text-black"
-                          : "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)]"
-                      }`}
-                    >
-                      TREE
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setViewMode("table")}
-                      class={`px-3 py-1.5 rounded text-xs font-mono transition-all ${
-                        viewMode() === "table"
-                          ? "bg-[var(--accent)] text-black"
-                          : "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)]"
-                      }`}
-                    >
-                      TABLE
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setViewMode("preview")}
-                      class={`px-3 py-1.5 rounded text-xs font-mono transition-all ${
-                        viewMode() === "preview"
-                          ? "bg-[var(--accent)] text-black"
-                          : "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)]"
-                      }`}
-                    >
-                      PREVIEW
-                    </button>
-                  </div>
+          <Show when={error()}>
+            <div class="px-4 py-2 bg-[rgba(239,68,68,0.1)] border-b border-[var(--border-subtle)]">
+              <span class="text-xs text-[var(--error)]">{error()}</span>
+            </div>
+          </Show>
+          
+          <Show when={success()}>
+            <div class="px-4 py-2 bg-[rgba(16,185,129,0.1)] border-b border-[var(--border-subtle)]">
+              <span class="text-xs text-[var(--success)]">{success()}</span>
+            </div>
+          </Show>
+          
+          <Show when={showViolations() && templateStore.templateDetected() && !templateStore.validationResult().isValid}>
+            <div class="max-h-48 overflow-y-auto border-b border-[var(--border-subtle)] bg-[rgba(239,68,68,0.05)]">
+              <div class="px-4 py-2">
+                <div class="flex items-center justify-between mb-2">
+                  <span class="text-xs font-medium text-[var(--error)]">TEMPLATE VIOLATIONS</span>
+                  <button
+                    type="button"
+                    onClick={() => setShowViolations(false)}
+                    class="text-xs text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+                  >
+                    ×
+                  </button>
                 </div>
-                
-                <Show when={error()}>
-                  <div class="flex items-center gap-2 px-4 py-3 bg-[rgba(239,68,68,0.1)] border-b border-[var(--error)]">
-                    <span class="led led-red"></span>
-                    <span class="text-[var(--error)] font-mono text-xs">{error()}</span>
-                  </div>
-                </Show>
-                
-                <Show when={success()}>
-                  <div class="flex items-center gap-2 px-4 py-3 bg-[rgba(34,197,94,0.1)] border-b border-[var(--success)]">
-                    <span class="led led-green"></span>
-                    <span class="text-[var(--success)] font-mono text-xs">{success()}</span>
-                  </div>
-                </Show>
-                
-                <Show when={loading()}>
-                  <div class="flex items-center justify-center gap-3 py-16">
-                    <div class="led led-amber led-pulse"></div>
-                    <span class="font-mono text-sm text-[var(--text-muted)]">LOADING...</span>
-                  </div>
-                </Show>
-                
-                <Show when={!loading() && jsonData()}>
-                  <div class="h-[calc(100vh-380px)] overflow-auto p-4">
-                    <Show when={viewMode() === "tree"}>
-                      <JsonTreeView data={jsonData()!} onChange={handleDataChange} onNodeClick={handleNodeClick} />
-                    </Show>
-                    <Show when={viewMode() === "table"}>
-                      <JsonTableView data={jsonData()!} onChange={handleDataChange} />
-                    </Show>
-                    <Show when={viewMode() === "preview"}>
-                      <PreviewPane data={jsonData()!} />
-                    </Show>
-                  </div>
-                </Show>
-                
-                <div class="flex items-center justify-between px-4 py-3 border-t border-[var(--border-subtle)] bg-[var(--bg-elevated)]">
-                  <div class="flex items-center gap-3">
-                    <button
-                      type="button"
-                      onClick={handleSave}
-                      disabled={saving() || !hasChanges()}
-                      class="btn-primary font-mono text-xs tracking-wide"
-                    >
-                      {saving() ? "SAVING..." : "SAVE TO R2"}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handleDownload}
-                      disabled={!jsonData()}
-                      class="btn-secondary font-mono text-xs"
-                    >
-                      DOWNLOAD
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handleAddFromTemplate}
-                      disabled={!jsonData()}
-                      class="btn-secondary font-mono text-xs"
-                      title="Add fields from template to current file"
-                    >
-                      + TEMPLATE
-                    </button>
-                  </div>
-                  <div class="font-mono text-xs text-[var(--text-muted)]">
-                    {hasChanges() ? "UNSAVED CHANGES" : "ALL CHANGES SAVED"}
-                  </div>
+                <div class="space-y-1">
+                  <For each={templateStore.validationResult().violations}>
+                    {(violation) => (
+                      <div class="flex items-start gap-2 text-xs">
+                        <span class="text-[var(--text-muted)]">[{violation.index}]</span>
+                        <span class={`${violation.severity === "error" ? "text-[var(--error)]" : "text-[var(--warning)]"}`}>
+                          {violation.path ? `${violation.path}: ` : ""}{violation.message}
+                        </span>
+                      </div>
+                    )}
+                  </For>
                 </div>
               </div>
-            </Show>
+            </div>
+          </Show>
+          
+          <Show when={loading()}>
+            <div class="flex items-center justify-center gap-2 py-12">
+              <span class="status-dot status-dot-amber animate-pulse"></span>
+              <span class="text-sm text-[var(--text-muted)]">Loading...</span>
+            </div>
+          </Show>
+          
+          <Show when={!loading() && jsonData()}>
+            <div class="h-[60vh] overflow-auto p-4">
+              <Show when={viewMode() === "tree"}>
+                <JsonTreeView data={jsonData()!} onChange={handleDataChange} onNodeClick={handleNodeClick} />
+              </Show>
+              <Show when={viewMode() === "table"}>
+                <JsonTableView data={jsonData()!} onChange={handleDataChange} onNodeClick={handleNodeClick} />
+              </Show>
+              <Show when={viewMode() === "preview"}>
+                <PreviewPane data={jsonData()!} />
+              </Show>
+            </div>
+          </Show>
+          
+          <div class="flex items-center justify-between px-4 py-3 border-t border-[var(--border-subtle)]">
+            <div class="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={handleSave}
+                disabled={saving() || !hasChanges() || !templateStore.canSave()}
+                class={`btn-primary text-xs ${!templateStore.canSave() ? "opacity-50" : ""}`}
+              >
+                {saving() ? "Saving..." : "Save"}
+              </button>
+              <button
+                type="button"
+                onClick={handleDownload}
+                disabled={!jsonData()}
+                class="btn-secondary text-xs"
+              >
+                Download
+              </button>
+              <button
+                type="button"
+                onClick={handleAddFromTemplate}
+                disabled={!jsonData()}
+                class="btn-ghost text-xs"
+              >
+                + Template
+              </button>
+            </div>
+            <div class="text-xs text-[var(--text-muted)]">
+              <Show when={!templateStore.canSave()}>
+                <span class="text-[var(--error)]">Template violations - </span>
+              </Show>
+              {hasChanges() ? "Unsaved changes" : "All changes saved"}
+            </div>
           </div>
         </div>
+      </Show>
 
-        <Show when={showTemplatePicker()}>
-          <TemplatePicker
-            onClose={() => {
-              setShowTemplatePicker(false);
-              setTemplatePickerExistingKey(null);
-              setTemplatePickerExistingData(null);
-            }}
-            onCreated={handleTemplateCreated}
-            existingFile={templatePickerExistingKey()}
-            existingData={templatePickerExistingData() as any}
-          />
-        </Show>
-
-        <Show when={nestedViewPath() !== null && jsonData()}>
-          <NestedViewModal
-            data={jsonData()!}
-            rootData={jsonData()!}
-            basePath={nestedViewPath()!}
-            onClose={() => setNestedViewPath(null)}
-            onSave={handleNestedSave}
-            onDrillDown={handleNestedDrillDown}
-          />
-        </Show>
+      <div class="mt-4">
+        <FileBrowser
+          selectedFile={selectedFile()}
+          onFileSelect={handleFileSelect}
+          refreshTrigger={refreshKey()}
+          onCreateFromTemplate={() => setShowTemplatePicker(true)}
+        />
       </div>
+
+      <Show when={showTemplatePicker()}>
+        <TemplatePicker
+          onClose={() => {
+            setShowTemplatePicker(false);
+            setTemplatePickerExistingKey(null);
+            setTemplatePickerExistingData(null);
+          }}
+          onCreated={handleTemplateCreated}
+          existingFile={templatePickerExistingKey()}
+          existingData={templatePickerExistingData() as any}
+        />
+      </Show>
+
+      <Show when={nestedViewPath() !== null && jsonData()}>
+        <NestedViewModal
+          data={jsonData()!}
+          rootData={jsonData()!}
+          basePath={nestedViewPath()!}
+          onClose={() => setNestedViewPath(null)}
+          onSave={handleNestedSave}
+          onDrillDown={handleNestedDrillDown}
+        />
+      </Show>
     </div>
   );
 }

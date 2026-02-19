@@ -304,35 +304,35 @@ export default function TemplatePicker(props: Props) {
   };
 
   return (
-    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-      <div class="glass-elevated rounded-lg w-[1000px] max-h-[85vh] flex flex-col">
-        <div class="flex items-center justify-between px-6 py-4 border-b border-[var(--border-subtle)]">
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+      <div class="card rounded-lg w-[900px] max-h-[85vh] flex flex-col">
+        <div class="flex items-center justify-between px-5 py-3 border-b border-[var(--border-subtle)]">
           <div class="flex items-center gap-4">
-            <h2 class="font-mono text-lg text-[var(--text-primary)]">
-              {mode() === "create" ? "CREATE FROM TEMPLATE" : "ADD FROM TEMPLATE"}
+            <h2 class="text-base font-medium text-[var(--text-primary)]">
+              {mode() === "create" ? "Create from Template" : "Add from Template"}
             </h2>
             <div class="flex items-center gap-1">
               <button
                 type="button"
                 onClick={() => setMode("create")}
-                class={`px-3 py-1 rounded text-xs font-mono transition-all ${
+                class={`px-3 py-1 rounded-full text-xs transition-colors ${
                   mode() === "create"
-                    ? "bg-[var(--accent)] text-black"
+                    ? "bg-[var(--accent)] text-white"
                     : "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)]"
                 }`}
               >
-                NEW FILE
+                New File
               </button>
               <button
                 type="button"
                 onClick={() => setMode("add")}
-                class={`px-3 py-1 rounded text-xs font-mono transition-all ${
+                class={`px-3 py-1 rounded-full text-xs transition-colors ${
                   mode() === "add"
-                    ? "bg-[var(--accent)] text-black"
+                    ? "bg-[var(--accent)] text-white"
                     : "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)]"
                 }`}
               >
-                ADD TO EXISTING
+                Add to Existing
               </button>
             </div>
           </div>
@@ -346,15 +346,15 @@ export default function TemplatePicker(props: Props) {
         </div>
 
         <Show when={error()}>
-          <div class="px-6 py-3 bg-[rgba(239,68,68,0.1)] border-b border-[var(--error)]">
-            <span class="text-[var(--error)] font-mono text-sm">{error()}</span>
+          <div class="px-5 py-2 bg-[rgba(239,68,68,0.1)] border-b border-[var(--border-subtle)]">
+            <span class="text-sm text-[var(--error)]">{error()}</span>
           </div>
         </Show>
 
         <div class="flex flex-1 overflow-hidden">
-          <div class="w-56 border-r border-[var(--border-subtle)] flex flex-col">
+          <div class="w-52 border-r border-[var(--border-subtle)] flex flex-col">
             <div class="px-4 py-3 border-b border-[var(--border-subtle)]">
-              <span class="font-mono text-xs text-[var(--text-muted)] tracking-wide">
+              <span class="text-xs text-[var(--text-muted)]">
                 {mode() === "create" ? "SOURCE FILES" : "SOURCE / TARGET"}
               </span>
             </div>
@@ -362,13 +362,13 @@ export default function TemplatePicker(props: Props) {
               <Show when={mode() === "add" && targetData()}>
                 <div class="px-3 py-2 bg-[var(--accent-subtle)] border-b border-[var(--border-subtle)]">
                   <div class="flex items-center justify-between">
-                    <span class="font-mono text-xs text-[var(--accent)]">TARGET:</span>
-                    <span class="font-mono text-xs text-[var(--text-muted)]">
+                    <span class="text-xs text-[var(--accent)]">TARGET:</span>
+                    <span class="text-xs text-[var(--text-muted)]">
                       {isArray(targetData()) ? `Array[${(targetData() as JsonArray).length} entries]` : "Object"}
                     </span>
                   </div>
                   <div class="flex items-center justify-between mt-1">
-                    <span class="font-mono text-xs text-[var(--text-primary)] truncate">
+                    <span class="text-xs text-[var(--text-primary)] truncate">
                       {targetFile()?.split("/").pop()}
                     </span>
                     <button
@@ -384,12 +384,12 @@ export default function TemplatePicker(props: Props) {
                   </div>
                   <Show when={isObject(targetData())}>
                     <div class="mt-2 pt-2 border-t border-[var(--border-subtle)]">
-                      <span class="font-mono text-xs text-[var(--text-muted)]">EXISTING FIELDS:</span>
+                      <span class="text-xs text-[var(--text-muted)]">EXISTING FIELDS:</span>
                       <div class="mt-1 space-y-1 max-h-24 overflow-y-auto">
                         <For each={Object.keys(targetData() as JsonObject)}>
                           {(key) => (
                             <div class="flex items-center gap-2">
-                              <span class="font-mono text-xs text-green-400">"{key}"</span>
+                              <span class="text-xs text-green-400">"{key}"</span>
                             </div>
                           )}
                         </For>
@@ -398,7 +398,7 @@ export default function TemplatePicker(props: Props) {
                   </Show>
                   <Show when={isArray(targetData())}>
                     <div class="mt-2 pt-2 border-t border-[var(--border-subtle)]">
-                      <span class="font-mono text-xs text-[var(--text-muted)]">
+                      <span class="text-xs text-[var(--text-muted)]">
                         New entry will be appended to array
                       </span>
                     </div>
@@ -408,7 +408,7 @@ export default function TemplatePicker(props: Props) {
               
               <Show when={loading()}>
                 <div class="px-4 py-4 text-center">
-                  <span class="font-mono text-xs text-[var(--text-muted)]">LOADING...</span>
+                  <span class="text-xs text-[var(--text-muted)]">Loading...</span>
                 </div>
               </Show>
               
@@ -424,23 +424,23 @@ export default function TemplatePicker(props: Props) {
                         handleSourceSelect(file.key);
                       }}
                       disabled={mode() === "add" && isTarget}
-                      class={`w-full text-left px-4 py-2 border-b border-[var(--border-subtle)] transition-all disabled:opacity-50 ${
+                      class={`w-full text-left px-4 py-2 border-b border-[var(--border-subtle)] transition-colors disabled:opacity-50 ${
                         isSource || isTarget
                           ? "bg-[var(--accent-subtle)]"
-                          : "hover:bg-[var(--bg-elevated)]"
+                          : "hover:bg-[var(--bg-tertiary)]"
                       }`}
                     >
                       <div class="flex items-center gap-2">
                         <Show when={isSource}>
-                          <span class="font-mono text-xs text-[var(--accent)]">S</span>
+                          <span class="text-xs text-[var(--accent)]">S</span>
                         </Show>
                         <Show when={isTarget}>
-                          <span class="font-mono text-xs text-[var(--accent)]">T</span>
+                          <span class="text-xs text-[var(--accent)]">T</span>
                         </Show>
                         <Show when={!isSource && !isTarget}>
-                          <span class="font-mono text-xs text-[var(--text-muted)]">+</span>
+                          <span class="text-xs text-[var(--text-muted)]">+</span>
                         </Show>
-                        <span class={`font-mono text-xs truncate ${
+                        <span class={`text-xs truncate ${
                           isSource || isTarget 
                             ? "text-[var(--accent)]" 
                             : "text-[var(--text-primary)]"
@@ -471,7 +471,7 @@ export default function TemplatePicker(props: Props) {
           <div class="flex-1 flex flex-col overflow-hidden">
             <Show when={selectedSources().size > 0} fallback={
               <div class="flex-1 flex items-center justify-center">
-                <span class="font-mono text-sm text-[var(--text-muted)]">Select a source file to pick fields</span>
+                <span class="text-sm text-[var(--text-muted)]">Select a source file to pick fields</span>
               </div>
             }>
               <div class="flex items-center border-b border-[var(--border-subtle)] overflow-x-auto">
@@ -483,10 +483,10 @@ export default function TemplatePicker(props: Props) {
                         setActiveSource(key);
                         setActivePath([]);
                       }}
-                      class={`px-4 py-2 font-mono text-xs border-r border-[var(--border-subtle)] flex items-center gap-2 shrink-0 ${
+                      class={`px-4 py-2 text-xs border-r border-[var(--border-subtle)] flex items-center gap-2 shrink-0 ${
                         activeSource() === key && activePath().length === 0
                           ? "bg-[var(--accent-subtle)] text-[var(--accent)]"
-                          : "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-elevated)]"
+                          : "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)]"
                       }`}
                     >
                       <span class="truncate max-w-28">{key.split("/").pop()}</span>
@@ -503,7 +503,7 @@ export default function TemplatePicker(props: Props) {
                   )}
                 </For>
                 <Show when={activePath().length > 0}>
-                  <div class="flex items-center px-2 py-1 bg-[var(--bg-elevated)] overflow-x-auto">
+                  <div class="flex items-center px-2 py-1 bg-[var(--bg-tertiary)] overflow-x-auto">
                     <For each={breadcrumbs()}>
                       {(item, index) => (
                         <>
@@ -513,7 +513,7 @@ export default function TemplatePicker(props: Props) {
                           <button
                             type="button"
                             onClick={() => handleBreadcrumbClick(index())}
-                            class={`font-mono text-xs px-1 rounded hover:bg-[var(--bg-tertiary)] ${
+                            class={`text-xs px-1 rounded hover:bg-[var(--bg-elevated)] ${
                               index() === breadcrumbs().length - 1
                                 ? "text-[var(--text-primary)]"
                                 : "text-[var(--text-secondary)]"
@@ -531,11 +531,11 @@ export default function TemplatePicker(props: Props) {
               <div class="flex-1 overflow-y-auto p-4">
                 <Show when={activeSourceData()}>
                   <div class="space-y-1">
-                    <div class="flex items-center justify-between mb-4">
-                      <span class="font-mono text-xs text-[var(--text-muted)]">
+                    <div class="flex items-center justify-between mb-3">
+                      <span class="text-xs text-[var(--text-muted)]">
                         {activePath().length === 0 ? "TOP-LEVEL FIELDS" : `FIELDS IN "${activePath()[activePath().length - 1]}"`}
                       </span>
-                      <span class="font-mono text-xs text-[var(--text-muted)]">
+                      <span class="text-xs text-[var(--text-muted)]">
                         {selectedFields().filter(f => f.sourceFile === activeSource()).length} selected
                       </span>
                     </div>
@@ -546,10 +546,10 @@ export default function TemplatePicker(props: Props) {
                         const selectedField = () => getSelectedField(entry.key);
                         
                         return (
-                          <div class={`flex items-center gap-3 p-2 rounded border transition-all ${
+                          <div class={`flex items-center gap-3 p-2 rounded border transition-colors ${
                             isSelected() 
-                              ? "bg-[var(--accent-subtle)] border-[var(--accent)]" 
-                              : "hover:bg-[var(--bg-elevated)] border-transparent hover:border-[var(--border-subtle)]"
+                                ? "bg-[var(--accent-subtle)] border-[var(--accent)]" 
+                                : "hover:bg-[var(--bg-tertiary)] border-transparent hover:border-[var(--border-subtle)]"
                           }`}>
                             <input
                               type="checkbox"
@@ -557,17 +557,17 @@ export default function TemplatePicker(props: Props) {
                               onChange={() => handleToggleField(entry.key, entry.value)}
                               class="w-4 h-4 accent-[var(--accent)]"
                             />
-                            <span class={`font-mono text-sm min-w-[120px] ${hasConflict() ? "text-[var(--warning)]" : "text-yellow-300"}`}>
+                            <span class={`text-sm min-w-[120px] ${hasConflict() ? "text-[var(--warning)]" : "text-yellow-400"}`}>
                               {entry.key}
                             </span>
-                            <span class="font-mono text-xs text-gray-500 min-w-[100px]">
+                            <span class="text-xs text-[var(--text-muted)] min-w-[100px]">
                               {getValuePreview(entry.value)}
                             </span>
                             <Show when={entry.isExpandable && !isSelected()}>
                               <button
                                 type="button"
                                 onClick={() => handleDrillDown(entry.key)}
-                                class="font-mono text-xs text-[var(--accent)] hover:underline"
+                                class="text-xs text-[var(--accent)] hover:underline"
                               >
                                 [drill]
                               </button>
@@ -577,7 +577,7 @@ export default function TemplatePicker(props: Props) {
                                 type="text"
                                 value={selectedField()?.selectedKey || ""}
                                 onInput={(e) => handleRenameField([...activePath(), entry.key], e.currentTarget.value)}
-                                class="font-mono text-sm bg-[var(--bg-tertiary)] border border-[var(--border-subtle)] rounded px-2 py-1 flex-1 max-w-[200px] text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent)]"
+                                class="text-sm bg-[var(--bg-tertiary)] border border-[var(--border-subtle)] rounded px-2 py-1 flex-1 max-w-[200px] text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent)]"
                                 placeholder="Rename"
                               />
                             </Show>
@@ -586,7 +586,7 @@ export default function TemplatePicker(props: Props) {
                       }}
                     </For>
                     <Show when={activeSourceEntries().length === 0}>
-                      <p class="font-mono text-xs text-[var(--text-muted)] text-center py-4">
+                      <p class="text-xs text-[var(--text-muted)] text-center py-4">
                         {isArray(activeSourceData()) ? "Empty array" : "No fields available"}
                       </p>
                     </Show>
@@ -597,21 +597,21 @@ export default function TemplatePicker(props: Props) {
           </div>
         </div>
 
-        <div class="px-6 py-4 border-t border-[var(--border-subtle)] bg-[var(--bg-elevated)]">
+        <div class="px-5 py-3 border-t border-[var(--border-subtle)] bg-[var(--bg-tertiary)]">
           <div class="flex items-center justify-between">
             <div class="flex items-center gap-4">
               <Show when={mode() === "create"}>
-                <span class="font-mono text-xs text-[var(--text-muted)]">NEW FILE:</span>
+                <span class="text-xs text-[var(--text-muted)]">NEW FILE:</span>
                 <input
                   type="text"
                   value={newFileName()}
                   onInput={(e) => setNewFileName(e.currentTarget.value)}
                   placeholder="entry.json"
-                  class="font-mono text-sm bg-[var(--bg-tertiary)] border border-[var(--border-subtle)] rounded px-3 py-2 w-64 text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent)]"
+                  class="text-sm bg-[var(--bg-secondary)] border border-[var(--border-subtle)] rounded px-3 py-1.5 w-64 text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent)]"
                 />
               </Show>
               <Show when={mode() === "add"}>
-                <span class="font-mono text-xs text-[var(--text-muted)]">
+                <span class="text-xs text-[var(--text-muted)]">
                   {targetData() 
                     ? isArray(targetData())
                       ? `Will append new entry with ${selectedFields().length} field${selectedFields().length !== 1 ? "s" : ""} to ${targetFile()?.split("/").pop()}`
@@ -620,21 +620,21 @@ export default function TemplatePicker(props: Props) {
                 </span>
               </Show>
             </div>
-            <div class="flex items-center gap-3">
+            <div class="flex items-center gap-2">
               <button
                 type="button"
                 onClick={props.onClose}
-                class="btn-secondary font-mono text-xs"
+                class="btn-secondary text-xs"
               >
-                CANCEL
+                Cancel
               </button>
               <button
                 type="button"
                 onClick={handleCreate}
                 disabled={creating() || selectedFields().length === 0 || (mode() === "add" && !targetFile())}
-                class="btn-primary font-mono text-xs"
+                class="btn-primary text-xs"
               >
-                {creating() ? "SAVING..." : mode() === "create" ? "CREATE ENTRY" : "ADD FIELDS"}
+                {creating() ? "Saving..." : mode() === "create" ? "Create" : "Add Fields"}
               </button>
             </div>
           </div>

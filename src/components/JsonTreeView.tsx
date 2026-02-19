@@ -100,7 +100,7 @@ function ValueEditor(props: { value: JsonValue; path: string[]; onChange: (path:
       when={editing()}
       fallback={
         <span
-          class={`cursor-pointer hover:bg-slate-700 px-1 rounded ${colorClass()}`}
+          class="cursor-pointer hover:bg-[var(--bg-tertiary)] px-1 rounded text-sm"
           onClick={startEdit}
         >
           <Show when={type() === "string"}>
@@ -121,7 +121,7 @@ function ValueEditor(props: { value: JsonValue; path: string[]; onChange: (path:
           if (e.key === "Enter") saveEdit();
           if (e.key === "Escape") cancelEdit();
         }}
-        class="px-1 bg-slate-700 border border-sky-500 rounded text-white text-sm w-32 focus:outline-none"
+        class="px-1 bg-[var(--bg-primary)] border border-[var(--accent)] rounded text-sm w-32 focus:outline-none"
         autofocus
       />
     </Show>
@@ -132,23 +132,23 @@ function TypeSelector(props: { onSelect: (type: JsonType) => void; onClose: () =
   const types: JsonType[] = ["string", "number", "boolean", "null", "object", "array"];
   
   return (
-    <div class="absolute z-20 bg-slate-800 border border-slate-600 rounded shadow-lg py-1 min-w-[120px]">
+    <div class="absolute z-20 bg-[var(--bg-elevated)] border border-[var(--border-subtle)] rounded shadow-lg py-1 min-w-[120px]">
       <For each={types}>
         {(type) => (
           <button
             type="button"
             onClick={() => props.onSelect(type)}
-            class="w-full text-left px-3 py-1.5 text-sm font-mono hover:bg-slate-700 text-white capitalize"
+            class="w-full text-left px-3 py-1.5 text-sm hover:bg-[var(--bg-tertiary)] text-[var(--text-primary)] capitalize"
           >
             {type}
           </button>
         )}
       </For>
-      <div class="border-t border-slate-600 mt-1 pt-1">
+      <div class="border-t border-[var(--border-subtle)] mt-1 pt-1">
         <button
           type="button"
           onClick={props.onClose}
-          class="w-full text-left px-3 py-1.5 text-sm font-mono hover:bg-slate-700 text-gray-400"
+          class="w-full text-left px-3 py-1.5 text-sm hover:bg-[var(--bg-tertiary)] text-[var(--text-muted)]"
         >
           Cancel
         </button>
@@ -248,7 +248,7 @@ function TreeNode(props: { keyName: string; value: JsonValue; path: string[]; on
           <button
             type="button"
             onClick={handleExpandClick}
-            class="text-gray-500 hover:text-white mr-1"
+            class="text-[var(--text-muted)] hover:text-[var(--text-primary)] mr-1 text-xs"
           >
             {collapsed() ? "▶" : "▼"}
           </button>
@@ -257,12 +257,12 @@ function TreeNode(props: { keyName: string; value: JsonValue; path: string[]; on
           <span class="w-4 mr-1" />
         </Show>
         
-        <span class="text-yellow-300 mr-1">"{props.keyName}"</span>
-        <span class="text-gray-500 mr-1">:</span>
+        <span class="text-yellow-400 mr-1">"{props.keyName}"</span>
+        <span class="text-[var(--text-muted)] mr-1">:</span>
         
         <Show when={type() === "object" || type() === "array"}>
           <span 
-            class="text-gray-500 text-sm cursor-pointer hover:text-[var(--accent)]"
+            class="text-[var(--text-muted)] text-sm cursor-pointer hover:text-[var(--accent)]"
             onClick={handleNodeClick}
           >
             {collapsed() ? (
@@ -280,9 +280,9 @@ function TreeNode(props: { keyName: string; value: JsonValue; path: string[]; on
         <button
           type="button"
           onClick={handleDelete}
-          class="ml-2 text-red-500 hover:text-red-400 text-xs opacity-0 group-hover:opacity-100"
+          class="ml-2 text-[var(--error)] hover:text-[var(--error)] text-xs opacity-0 group-hover:opacity-100"
         >
-          ✕
+          ×
         </button>
         <div class="relative">
           <button
@@ -294,18 +294,18 @@ function TreeNode(props: { keyName: string; value: JsonValue; path: string[]; on
             ⧉
           </button>
           <Show when={showDuplicateMenu()}>
-            <div class="absolute z-30 bg-slate-800 border border-slate-600 rounded shadow-lg py-1 min-w-[140px] left-0 mt-1">
+            <div class="absolute z-30 bg-[var(--bg-elevated)] border border-[var(--border-subtle)] rounded shadow-lg py-1 min-w-[140px] left-0 mt-1">
               <button
                 type="button"
                 onClick={handleDuplicateAsSibling}
-                class="w-full text-left px-3 py-1.5 text-sm font-mono hover:bg-slate-700 text-white"
+                class="w-full text-left px-3 py-1.5 text-sm hover:bg-[var(--bg-tertiary)] text-[var(--text-primary)]"
               >
                 ↗ As sibling
               </button>
               <button
                 type="button"
                 onClick={handleDuplicateInside}
-                class="w-full text-left px-3 py-1.5 text-sm font-mono hover:bg-slate-700 text-white"
+                class="w-full text-left px-3 py-1.5 text-sm hover:bg-[var(--bg-tertiary)] text-[var(--text-primary)]"
               >
                 ↙ Inside
               </button>
@@ -315,7 +315,7 @@ function TreeNode(props: { keyName: string; value: JsonValue; path: string[]; on
       </div>
       
       <Show when={isExpandable() && !collapsed()}>
-        <div class="border-l border-slate-700 ml-2">
+        <div class="border-l border-[var(--border-subtle)] ml-2">
           <Show when={type() === "object"}>
             <For each={Object.entries(props.value as JsonObject)}>
                 {([key, val]: [string, JsonValue]) => (
@@ -347,12 +347,12 @@ function TreeNode(props: { keyName: string; value: JsonValue; path: string[]; on
             </For>
           </Show>
           
-          <div class="mt-1 pt-1 border-t border-slate-700/50">
+          <div class="mt-1 pt-1 border-t border-[var(--border-subtle)]">
             <div class="relative">
               <button
                 type="button"
                 onClick={() => setShowTypeSelector(!showTypeSelector())}
-                class="flex items-center gap-1 px-2 py-1 text-xs font-mono text-[var(--accent)] hover:bg-slate-700/50 rounded"
+                class="flex items-center gap-1 px-2 py-1 text-xs text-[var(--accent)] hover:bg-[var(--bg-tertiary)] rounded"
               >
                 + {type() === "array" ? "Add Item" : "Add Property"}
               </button>
@@ -459,13 +459,12 @@ export default function JsonTreeView(props: Props) {
     <div class="font-mono text-sm overflow-auto max-h-full">
       <Show when={isObject(props.data) || isArray(props.data)}>
         <div class="group">
-          <div class="flex items-center justify-between mb-2 pr-2">
-            <span class="text-gray-500 text-xs uppercase tracking-wide">Tree View</span>
+          <div class="flex items-center justify-end mb-2">
             <div class="relative">
               <button
                 type="button"
                 onClick={() => setShowTypeSelector(!showTypeSelector())}
-                class="flex items-center gap-1 px-2 py-1 text-xs font-mono text-[var(--accent)] hover:bg-slate-700/50 rounded border border-slate-600 bg-slate-800"
+                class="flex items-center gap-1 px-2 py-1 text-xs text-[var(--accent)] hover:bg-[var(--bg-tertiary)] rounded"
                 title={isArray(props.data) ? "Add item to array" : "Add property to object"}
               >
                 + {isArray(props.data) ? "Add Item" : "Add Property"}
